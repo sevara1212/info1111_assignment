@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "next.config.js",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/edge/.*",
+      "dest": "/api/edge/$1",
+      "methods": ["GET", "POST"]
+    }
+  ],
+  "regions": ["syd1", "hnd1"],
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-bookings",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/maintenance-reminder",
+      "schedule": "0 9 * * 1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "https://strata-management.vercel.app",
+    "BOOKING_SECRET": "@booking-secret",
+    "MAINTENANCE_API_KEY": "@maintenance-api-key"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/downloads/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ]
+} 

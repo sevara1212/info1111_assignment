@@ -1,0 +1,217 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.sidebar {
+  width: 280px;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  height: 100vh;
+}
+
+.profileSection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.profileIcon {
+  width: 3rem;
+  height: 3rem;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #4b5563;
+}
+
+.profileName {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.profileEmail {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.navMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #4b5563;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.navItem:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.navIcon {
+  font-size: 1.25rem;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+  margin-left: 280px;
+}
+
+.dashboardSquare {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.textArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.welcomeText {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dateText {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.timeText {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.imageArea {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dashboardImage {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding: 0 1rem;
+}
+
+.actionCard {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 0.875rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  min-height: 126px;
+  width: 100%;
+  max-width: 175px;
+  margin: 0 auto;
+}
+
+.actionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.logoutButton {
+  margin-top: auto;
+  padding: 0.75rem 1.5rem;
+  background-color: #ef4444;
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.logoutButton:hover {
+  background-color: #dc2626;
+}
+
+@media (max-width: 1400px) {
+  .actionCard {
+    max-width: 154px;
+    padding: 0.75rem;
+    min-height: 112px;
+  }
+  
+  .actionGrid {
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 240px;
+  }
+  
+  .mainContent {
+    margin-left: 240px;
+  }
+  
+  .actionCard {
+    max-width: 140px;
+  }
+  
+  .actionGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    position: relative;
+    height: auto;
+    margin-bottom: 1rem;
+  }
+  
+  .mainContent {
+    margin-left: 0;
+  }
+  
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+} 
