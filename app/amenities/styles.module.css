@@ -159,7 +159,7 @@
 
 .button {
   padding: 0.875rem 1.5rem;
-  background-color: #2563eb;
+  background-color: #000000;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -169,7 +169,7 @@
 }
 
 .button:hover {
-  background-color: #1d4ed8;
+  background-color: #333333;
   transform: translateY(-1px);
 }
 

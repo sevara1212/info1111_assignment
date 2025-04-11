@@ -14,25 +14,23 @@ export default function Amenities() {
       image: "/images/poolindoor.png",
       description: "Luxurious heated indoor swimming pool with dedicated lap lanes and relaxation area",
       hours: "6:00 AM - 10:00 PM",
-      features: ["Temperature controlled", "Change rooms", "Shower facilities", "Pool loungers"]
     },
     {
       name: "Fitness Center",
       image: "/images/gym.png",
       description: "State-of-the-art fitness center featuring cardio equipment and weight training area",
       hours: "24/7 Access",
-      features: ["Modern equipment", "Free weights", "Cardio machines", "Personal training area"]
     }
   ];
 
   function checkEligibility() {
     const aptNumber = parseInt(apartment, 10);
-    const floor = Math.floor(aptNumber / 100);
-    if (floor >= 5 && floor <= 50) {
-      setEligible(true);
-    } else {
+    if (isNaN(aptNumber)) {
       setEligible(false);
+      return;
     }
+    const floor = Math.floor(aptNumber / 100);
+    setEligible(floor >= 5 && floor <= 50);
   }
 
   return (
@@ -50,16 +48,12 @@ export default function Amenities() {
                   width={400}
                   height={500}
                   className={styles.amenityImage}
+                  priority={index === 0}
                 />
               </div>
               <div className={styles.amenityContent}>
                 <h3 className={styles.amenityName}>{amenity.name}</h3>
                 <p className={styles.amenityDescription}>{amenity.description}</p>
-                <div className={styles.amenityFeatures}>
-                  {amenity.features.map((feature, idx) => (
-                    <span key={idx} className={styles.featureTag}>{feature}</span>
-                  ))}
-                </div>
                 <p className={styles.amenityHours}>
                   <span className={styles.hoursLabel}>Operating Hours:</span> {amenity.hours}
                 </p>
@@ -77,10 +71,13 @@ export default function Amenities() {
               className={styles.input}
               value={apartment}
               onChange={(e) => setApartment(e.target.value)}
+              pattern="[0-9]*"
+              inputMode="numeric"
             />
             <button
               onClick={checkEligibility}
               className={styles.button}
+              type="button"
             >
               Check Access
             </button>
