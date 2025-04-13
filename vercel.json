@@ -6,14 +6,12 @@
       "use": "@vercel/next"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/edge/.*",
-      "dest": "/api/edge/$1",
-      "methods": ["GET", "POST"]
+      "source": "/api/edge/:path*",
+      "destination": "/api/edge/:path*"
     }
   ],
-  "regions": ["syd1", "hnd1"],
   "crons": [
     {
       "path": "/api/cron/cleanup-bookings",
@@ -24,31 +22,9 @@
       "schedule": "0 9 * * 1"
     }
   ],
+  "regions": ["syd1"],
   "env": {
     "NEXT_PUBLIC_APP_URL": "https://strata-management.vercel.app",
-    "BOOKING_SECRET": "@booking-secret",
-    "MAINTENANCE_API_KEY": "@maintenance-api-key"
-  },
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/downloads/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400"
-        }
-      ]
-    }
-  ]
-} 
+    "BOOKING_SECRET": "@booking-secret"
+  }
+}
