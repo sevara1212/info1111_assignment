@@ -6,11 +6,20 @@
       "use": "@vercel/next"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/edge/.*",
-      "dest": "/api/edge/$1",
-      "methods": ["GET", "POST"]
+      "source": "/api/edge/:path*",
+      "destination": "/api/edge/:path*",
+      "has": [
+        {
+          "type": "method",
+          "value": "GET"
+        },
+        {
+          "type": "method",
+          "value": "POST"
+        }
+      ]
     }
   ],
   "regions": ["syd1", "hnd1"],
@@ -33,7 +42,7 @@
   "outputDirectory": ".next",
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -42,7 +51,7 @@
       ]
     },
     {
-      "source": "/downloads/(.*)",
+      "source": "/downloads/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -51,4 +60,4 @@
       ]
     }
   ]
-} 
+}
