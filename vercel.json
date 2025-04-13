@@ -25,8 +25,8 @@
   ],
   "env": {
     "NEXT_PUBLIC_APP_URL": "https://strata-management.vercel.app",
-    "BOOKING_SECRET": "@booking-secret",
-    "MAINTENANCE_API_KEY": "@maintenance-api-key"
+    "BOOKING_SECRET": "your-actual-secret-value-here",
+    "MAINTENANCE_API_KEY": "your-api-key-here"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
