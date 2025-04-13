@@ -23,18 +23,23 @@ export default function Amenities() {
     }
   ];
 
-  function checkEligibility() {
-    const aptNumber = parseInt(apartment, 10);
-    if (isNaN(aptNumber)) {
+  const checkEligibility = () => {
+    try {
+      const aptNumber = parseInt(apartment, 10);
+      if (isNaN(aptNumber)) {
+        setEligible(false);
+        return;
+      }
+      const floor = Math.floor(aptNumber / 100);
+      setEligible(floor >= 5 && floor <= 50);
+    } catch (error) {
+      console.error("Error checking eligibility:", error);
       setEligible(false);
-      return;
     }
-    const floor = Math.floor(aptNumber / 100);
-    setEligible(floor >= 5 && floor <= 50);
-  }
+  };
 
   return (
-    <div className={styles.container}>
+    <main className={styles.container}>
       <div className={styles.content}>
         <h1 className={styles.title}>Premium Building Amenities</h1>
         
@@ -49,6 +54,7 @@ export default function Amenities() {
                   height={500}
                   className={styles.amenityImage}
                   priority={index === 0}
+                  unoptimized={true}
                 />
               </div>
               <div className={styles.amenityContent}>
@@ -100,6 +106,6 @@ export default function Amenities() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
