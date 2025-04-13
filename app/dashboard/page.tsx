@@ -1,134 +1,127 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
-import { 
-  FaUserCircle, 
-  FaHome, 
-  FaTools, 
-  FaMoneyBillWave, 
-  FaFileAlt, 
-  FaPhone,
-  FaArrowCircleUp
-} from "react-icons/fa";
+import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp } from "react-icons/fa";
 import styles from "./styles.module.css";
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  const getGreeting = () => {
-    const hour = currentTime.getHours();
-    return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  };
+export default function Dashboard() {
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    setLoading(false);
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const updateTime = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      
+      // Set greeting based on time of day
+      if (hour < 12) setGreeting('Good Morning');
+      else if (hour < 18) setGreeting('Good Afternoon');
+      else setGreeting('Good Evening');
 
+      // Format time
+      setCurrentTime(now.toLocaleTimeString('en-US', { 
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true 
+      }));
+
+      // Format date
+      setCurrentDate(now.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }));
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  const navItems = [
-    { title: "Dashboard", icon: <FaHome />, link: "/dashboard" },
-    { title: "Maintenance", icon: <FaTools />, link: "/maintenance" },
-    { title: "Amenities", icon: <FaMoneyBillWave />, link: "/amenities" },
-    { title: "Book Lift", icon: <FaArrowCircleUp />, link: "/book-lift" },
-    { title: "Downloads", icon: <FaFileAlt />, link: "/downloads" },
-    { title: "Contact", icon: <FaPhone />, link: "/contact" },
+  const navigationItems = [
+    { title: 'Dashboard', icon: <FaHome className="text-xl" />, link: '/' },
+    { title: 'Amenities', icon: <FaSwimmingPool className="text-xl" />, link: '/amenities' },
+    { title: 'Downloads', icon: <FaFileAlt className="text-xl" />, link: '/downloads' },
+    { title: 'Book Lift', icon: <FaArrowCircleUp className="text-xl" />, link: '/book-lift' },
   ];
 
   const actionCards = [
-    { 
-      title: "Maintenance", 
-      icon: <Image src="/images/maintenance.png" alt="Maintenance" width={80} height={80} className={styles.cardIcon} />, 
-      link: "/maintenance" 
+    {
+      title: 'Amenities',
+      icon: <div className="relative w-20 h-20 mb-4">
+              <Image src="/images/poolindoor.png" alt="Amenities" fill className="object-cover rounded-lg" />
+            </div>,
+      link: '/amenities'
     },
-    { 
-      title: "Amenities", 
-      icon: <Image src="/images/levies.jpg" alt="Amenities" width={80} height={80} className={styles.cardIcon} />, 
-      link: "/amenities" 
+    {
+      title: 'Downloads',
+      icon: <div className="relative w-20 h-20 mb-4">
+              <Image src="/images/download.jpg" alt="Downloads" fill className="object-cover rounded-lg" />
+            </div>,
+      link: '/downloads'
     },
-    { 
-      title: "Book Lift", 
-      icon: <Image src="/images/book.jpg" alt="Book Lift" width={80} height={80} className={styles.cardIcon} />, 
-      link: "/book-lift" 
-    },
-    { 
-      title: "Downloads", 
-      icon: <Image src="/images/download.jpg" alt="Downloads" width={80} height={80} className={styles.cardIcon} />, 
-      link: "/downloads" 
-    },
-    { 
-      title: "Contact", 
-      icon: <Image src="/images/pngtree-calling-telephone-line-icon-vector-png-image_1885981.jpg" alt="Contact" width={80} height={80} className={styles.cardIcon} />, 
-      link: "/contact" 
-    },
+    {
+      title: 'Book Lift',
+      icon: <div className="relative w-20 h-20 mb-4">
+              <Image src="/images/book.jpg" alt="Book Lift" fill className="object-cover rounded-lg" />
+            </div>,
+      link: '/book-lift'
+    }
   ];
 
   return (
-    <div className={styles.container}>
-      <aside className={styles.sidebar}>
-        <div className={styles.profileSection}>
-          <FaUserCircle className={styles.profileIcon} />
-          <h2 className={styles.profileName}>Sevara Ibragimova</h2>
-          <p className={styles.profileEmail}>sevara.ibragimova@example.com</p>
+    <div className="min-h-screen bg-gray-50">
+      <nav className="fixed top-0 left-0 h-full w-72 bg-white shadow-soft-xl p-6">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+            <FaUser className="text-primary text-2xl" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">Welcome Back</h2>
+          <p className="text-sm text-muted">Resident Portal</p>
         </div>
-        <div className={styles.navMenu}>
-          {navItems.map((item, index) => (
-            <Link
-              key={index}
-              href={item.link}
-              className={styles.navItem}
+        <div className="space-y-2">
+          {navigationItems.map((item, index) => (
+            <Link 
+              href={item.link} 
+              key={index} 
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-primary transition-all"
             >
-              <span className={styles.navIcon}>{item.icon}</span>
+              {item.icon}
               <span>{item.title}</span>
             </Link>
           ))}
         </div>
-      </aside>
+      </nav>
 
-      <main className={styles.mainContent}>
-        <div className={styles.dashboardSquare}>
-          <div className={styles.textArea}>
-            <h1 className={styles.welcomeText}>{getGreeting()}, Welcome to Sevara Apartments</h1>
-            <p className={styles.dateText}>{format(currentTime, "EEEE, dd MMMM yyyy")}</p>
-            <div className={styles.timeText}>
-              {format(currentTime, "hh:mm a")}
+      <main className="ml-72 p-8">
+        <div className="card p-8 mb-8">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{greeting}</h1>
+              <p className="text-muted mb-1">{currentDate}</p>
+              <p className="text-2xl font-semibold text-gray-900">{currentTime}</p>
             </div>
-          </div>
-          <div className={styles.imageArea}>
-            <Image 
-              src="https://article-assets.soho.com.au/articles/wp-content/uploads/2024/01/13205212/Infinity-1-1024x684.jpeg" 
-              alt="Infinity Building" 
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-              className={styles.dashboardImage}
-            />
+            <div className="relative w-96 h-48 rounded-xl overflow-hidden">
+              <Image
+                src="/images/building.png"
+                alt="Building"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
           </div>
         </div>
 
-        <div className={styles.actionGrid}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {actionCards.map((card, index) => (
-            <Link
-              key={index}
-              href={card.link}
-              className={styles.actionCard}
-            >
+            <Link href={card.link} key={index} className="card p-6 flex flex-col items-center justify-center hover:scale-105">
               {card.icon}
-              <span>{card.title}</span>
+              <span className="text-lg font-medium text-gray-900">{card.title}</span>
             </Link>
           ))}
         </div>

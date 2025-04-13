@@ -1,111 +1,75 @@
 "use client";
 
-import { useState } from "react";
-import styles from "./styles.module.css";
 import Image from "next/image";
+import { FaClock } from "react-icons/fa";
 
-export default function Amenities() {
-  const [apartment, setApartment] = useState("");
-  const [eligible, setEligible] = useState<boolean | null>(null);
-
+export default function AmenitiesPage() {
   const amenities = [
     {
-      name: "Indoor Swimming Pool",
+      name: "Swimming Pool",
+      description: "Our luxurious swimming pool is perfect for both exercise and relaxation. Featuring temperature-controlled water and dedicated lap lanes.",
       image: "/images/poolindoor.png",
-      description: "Luxurious heated indoor swimming pool with dedicated lap lanes and relaxation area",
       hours: "6:00 AM - 10:00 PM",
+      features: ["Temperature Controlled", "Lap Lanes", "Pool Deck", "Shower Facilities"]
     },
     {
-      name: "Fitness Center",
+      name: "Gymnasium",
+      description: "State-of-the-art gym equipped with cardio machines, free weights, and dedicated areas for stretching and functional training.",
       image: "/images/gym.png",
-      description: "State-of-the-art fitness center featuring cardio equipment and weight training area",
       hours: "24/7 Access",
+      features: ["Modern Equipment", "Cardio Area", "Free Weights", "Personal Training"]
     }
   ];
 
-  const checkEligibility = () => {
-    try {
-      const aptNumber = parseInt(apartment, 10);
-      if (isNaN(aptNumber)) {
-        setEligible(false);
-        return;
-      }
-      const floor = Math.floor(aptNumber / 100);
-      setEligible(floor >= 5 && floor <= 50);
-    } catch (error) {
-      console.error("Error checking eligibility:", error);
-      setEligible(false);
-    }
-  };
-
   return (
-    <main className={styles.container}>
-      <div className={styles.content}>
-        <h1 className={styles.title}>Premium Building Amenities</h1>
-        
-        <div className={styles.amenitiesGrid}>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl font-bold text-center text-gray-900 mb-12 gradient-border">
+          Building Amenities
+        </h1>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {amenities.map((amenity, index) => (
-            <div key={index} className={styles.amenityCard}>
-              <div className={styles.imageWrapper}>
+            <div key={index} className="card overflow-hidden">
+              <div className="relative h-[500px] w-full">
                 <Image
                   src={amenity.image}
                   alt={amenity.name}
-                  width={400}
-                  height={500}
-                  className={styles.amenityImage}
-                  priority={index === 0}
-                  unoptimized={true}
+                  fill
+                  className="object-cover"
+                  priority
                 />
               </div>
-              <div className={styles.amenityContent}>
-                <h3 className={styles.amenityName}>{amenity.name}</h3>
-                <p className={styles.amenityDescription}>{amenity.description}</p>
-                <p className={styles.amenityHours}>
-                  <span className={styles.hoursLabel}>Operating Hours:</span> {amenity.hours}
+              
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  {amenity.name}
+                </h2>
+                
+                <p className="text-muted mb-6">
+                  {amenity.description}
                 </p>
+                
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {amenity.features.map((feature, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
+                    >
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex items-center text-muted">
+                  <FaClock className="mr-2" />
+                  <span className="text-sm">Hours: {amenity.hours}</span>
+                </div>
               </div>
             </div>
           ))}
         </div>
-
-        <div className={styles.eligibilitySection}>
-          <h2 className={styles.subtitle}>Check Your Access</h2>
-          <div className={styles.eligibilityForm}>
-            <input
-              type="text"
-              placeholder="Enter Apartment Number"
-              className={styles.input}
-              value={apartment}
-              onChange={(e) => setApartment(e.target.value)}
-              pattern="[0-9]*"
-              inputMode="numeric"
-            />
-            <button
-              onClick={checkEligibility}
-              className={styles.button}
-              type="button"
-            >
-              Check Access
-            </button>
-          </div>
-
-          {eligible !== null && (
-            <div className={styles.eligibilityResult}>
-              {eligible ? (
-                <div className={styles.successMessage}>
-                  ✅ You have access to all amenities!
-                  <p className={styles.accessNote}>Please use your key fob to access the facilities.</p>
-                </div>
-              ) : (
-                <div className={styles.errorMessage}>
-                  ❌ Only floors 5–50 have amenities access.
-                  <p className={styles.accessNote}>Please contact building management for more information.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
-    </main>
+    </div>
   );
 }

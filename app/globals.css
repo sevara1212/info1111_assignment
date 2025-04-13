@@ -3,11 +3,57 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  --primary: 79, 70, 229;
+  --primary-light: 99, 102, 241;
+  --secondary: 15, 23, 42;
+  --accent: 37, 99, 235;
+  --background: 255, 255, 255;
+  --foreground: 15, 23, 42;
+  --muted: 100, 116, 139;
+  --border: 226, 232, 240;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+@layer base {
+  body {
+    @apply bg-white text-gray-900;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .gradient-border {
+    position: relative;
+  }
+  
+  .gradient-border::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(to right, rgb(var(--primary)), rgb(var(--accent)));
+    border-radius: 2px;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-md border border-gray-100 transition-all duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-lg transform -translate-y-1;
+  }
+
+  .button {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200
+    bg-[rgb(var(--primary))] text-white hover:bg-[rgb(var(--primary-light))]
+    disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 rounded-lg border border-gray-200 
+    focus:outline-none focus:ring-2 focus:ring-[rgb(var(--primary))] focus:border-transparent
+    transition-all duration-200;
+  }
 } 
