@@ -9,17 +9,7 @@
   "rewrites": [
     {
       "source": "/api/edge/:path*",
-      "destination": "/api/edge/:path*",
-      "has": [
-        {
-          "type": "method",
-          "value": "GET"
-        },
-        {
-          "type": "method",
-          "value": "POST"
-        }
-      ]
+      "destination": "/api/edge/:path*"
     }
   ],
   "regions": ["syd1", "hnd1"],
