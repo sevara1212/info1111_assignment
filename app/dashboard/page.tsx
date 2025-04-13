@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { 
@@ -184,6 +185,43 @@ export default function DashboardPage() {
     return <div>Loading...</div>;
   }
 
+  const navItems = [
+    { title: "Dashboard", icon: <FaHome />, link: "/dashboard" },
+    { title: "Maintenance", icon: <FaTools />, link: "/maintenance" },
+    { title: "Amenities", icon: <FaMoneyBillWave />, link: "/amenities" },
+    { title: "Book Lift", icon: <FaArrowCircleUp />, link: "/book-lift" },
+    { title: "Downloads", icon: <FaFileAlt />, link: "/downloads" },
+    { title: "Contact", icon: <FaPhone />, link: "/contact" },
+  ];
+
+  const actionCards = [
+    { 
+      title: "Maintenance", 
+      icon: <Image src="/images/maintenance.png" alt="Maintenance" width={80} height={80} style={styles.cardIcon} />, 
+      link: "/maintenance" 
+    },
+    { 
+      title: "Amenities", 
+      icon: <Image src="/images/levies.jpg" alt="Amenities" width={80} height={80} style={styles.cardIcon} />, 
+      link: "/amenities" 
+    },
+    { 
+      title: "Book Lift", 
+      icon: <Image src="/images/book.jpg" alt="Book Lift" width={80} height={80} style={styles.cardIcon} />, 
+      link: "/book-lift" 
+    },
+    { 
+      title: "Downloads", 
+      icon: <Image src="/images/download.jpg" alt="Downloads" width={80} height={80} style={styles.cardIcon} />, 
+      link: "/downloads" 
+    },
+    { 
+      title: "Contact", 
+      icon: <Image src="/images/pngtree-calling-telephone-line-icon-vector-png-image_1885981.jpg" alt="Contact" width={80} height={80} style={styles.cardIcon} />, 
+      link: "/contact" 
+    },
+  ];
+
   return (
     <div style={styles.container}>
       <aside style={styles.sidebar}>
@@ -193,22 +231,15 @@ export default function DashboardPage() {
           <p style={styles.profileEmail}>sevara.ibragimova@example.com</p>
         </div>
         <div style={styles.navMenu}>
-          {[
-            { title: "Dashboard", icon: <FaHome />, link: "/dashboard" },
-            { title: "Maintenance", icon: <FaTools />, link: "/maintenance" },
-            { title: "Amenities", icon: <FaMoneyBillWave />, link: "/amenities" },
-            { title: "Book Lift", icon: <FaArrowCircleUp />, link: "/book-lift" },
-            { title: "Downloads", icon: <FaFileAlt />, link: "/downloads" },
-            { title: "Contact", icon: <FaPhone />, link: "/contact" },
-          ].map((item, index) => (
-            <a
+          {navItems.map((item, index) => (
+            <Link
               key={index}
               href={item.link}
               style={styles.navItem}
             >
               <span style={styles.navIcon}>{item.icon}</span>
               <span>{item.title}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </aside>
@@ -235,41 +266,15 @@ export default function DashboardPage() {
         </div>
 
         <div style={styles.actionGrid}>
-          {[
-            { 
-              title: "Maintenance", 
-              icon: <Image src="/images/maintenance.png" alt="Maintenance" width={80} height={80} style={styles.cardIcon} />, 
-              link: "/maintenance" 
-            },
-            { 
-              title: "Amenities", 
-              icon: <Image src="/images/levies.jpg" alt="Amenities" width={80} height={80} style={styles.cardIcon} />, 
-              link: "/amenities" 
-            },
-            { 
-              title: "Book Lift", 
-              icon: <Image src="/images/book.jpg" alt="Book Lift" width={80} height={80} style={styles.cardIcon} />, 
-              link: "/book-lift" 
-            },
-            { 
-              title: "Downloads", 
-              icon: <Image src="/images/download.jpg" alt="Downloads" width={80} height={80} style={styles.cardIcon} />, 
-              link: "/downloads" 
-            },
-            { 
-              title: "Contact", 
-              icon: <Image src="/images/pngtree-calling-telephone-line-icon-vector-png-image_1885981.jpg" alt="Contact" width={80} height={80} style={styles.cardIcon} />, 
-              link: "/contact" 
-            },
-          ].map((card, index) => (
-            <a
+          {actionCards.map((card, index) => (
+            <Link
               key={index}
               href={card.link}
               style={styles.actionCard}
             >
               {card.icon}
               <span>{card.title}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </main>
