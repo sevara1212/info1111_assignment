@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { 
   FaSwimmingPool, 
   FaFileDownload, 
-  FaElevator, 
   FaEnvelope, 
   FaTools,
   FaUsers,
@@ -16,7 +15,7 @@ import {
 const userNavItems = [
   { href: '/amenities', label: 'Amenities', icon: FaSwimmingPool },
   { href: '/downloads', label: 'Downloads', icon: FaFileDownload },
-  { href: '/book-lift', label: 'Book Lift', icon: FaElevator },
+  { href: '/book-lift', label: 'Book Lift', emoji: '🛗' },
   { href: '/contact', label: 'Contact', icon: FaEnvelope },
   { href: '/maintenance', label: 'Maintenance', icon: FaTools },
 ];
@@ -24,7 +23,7 @@ const userNavItems = [
 const adminNavItems = [
   { href: '/admin/maintenance', label: 'Maintenance Requests', icon: FaClipboardList },
   { href: '/admin/strata-roll', label: 'Strata Roll', icon: FaUsers },
-  { href: '/admin/lift-bookings', label: 'Lift Bookings', icon: FaElevator },
+  { href: '/admin/lift-bookings', label: 'Lift Bookings', emoji: '🛗' },
 ];
 
 export default function Navigation() {
@@ -46,7 +45,6 @@ export default function Navigation() {
           
           <div className="flex space-x-4">
             {navItems.map((item) => {
-              const Icon = item.icon;
               const isActive = pathname === item.href;
               
               return (
@@ -59,7 +57,13 @@ export default function Navigation() {
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <Icon className="mr-2 h-5 w-5" />
+                  {item.icon ? (
+                    <item.icon className="mr-2 h-5 w-5" />
+                  ) : (
+                    <span role="img" aria-label={item.label.toLowerCase()} className="mr-2">
+                      {item.emoji}
+                    </span>
+                  )}
                   {item.label}
                 </Link>
               );

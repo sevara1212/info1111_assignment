@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, doc, updateDoc, Timestamp, where } from 'firebase/firestore';
-import { FaElevator, FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
 
 interface LiftBooking {
   id: string;
@@ -103,7 +103,7 @@ export default function AdminLiftBookingsPage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-        <FaElevator className="text-blue-600" />
+        <span role="img" aria-label="elevator" className="text-2xl">🛗</span>
         Lift Bookings
       </h1>
 
