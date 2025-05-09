@@ -13,7 +13,7 @@ export default function HomePage() {
         <div className="text-center">
           <div className="relative w-32 h-32 mx-auto mb-6">
             <Image
-              src="public/images/sevara_apartments.png"
+              src="/images/sevara_apartments.png"
               alt="Building"
               fill
               className="object-contain"
