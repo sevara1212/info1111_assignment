@@ -15,7 +15,7 @@ const contacts = [
     email: "security@sevara.apartments",
     phone: "04 0000 0001",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "public/images/security.png",
+    imageUrl: "./images/security.png",
   },
   {
     position: "Strata Manager",
@@ -24,7 +24,7 @@ const contacts = [
     email: "stratamanager@sevara.apartments",
     phone: "04 0000 0002",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "public/images/stratamanager.png",
+    imageUrl: "./images/stratamanager.png",
   },
   {
     position: "Building Manager",
@@ -33,7 +33,7 @@ const contacts = [
     email: "buildingmanager@sevara.apartments",
     phone: "04 0000 0003",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "public/images/buildingmanager.png",
+    imageUrl: "./images/buildingmanager.png",
   },
   {
     position: "Chairperson",
@@ -42,7 +42,7 @@ const contacts = [
     email: "chairperson@sevara.apartments",
     phone: "04 0000 0004",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "public/images/chairperson.png",
+    imageUrl: "./images/chairperson.png",
   },
   {
     position: "Secretary",
@@ -51,7 +51,7 @@ const contacts = [
     email: "secretary@sevara.apartments",
     phone: "04 0000 0005",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "public/images/secretary.png",
+    imageUrl: "./images/secretary.png",
   },
   {
     position: "Treasurer",
@@ -60,7 +60,7 @@ const contacts = [
     email: "treasurer@sevara.apartments",
     phone: "04 0000 0006",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "public/images/treasurer.png",
+    imageUrl: "./images/treasurer.png",
   },
 ];
 
@@ -114,6 +114,10 @@ export default function ContactPage() {
                 src={contact.imageUrl}
                 alt={contact.name}
                 className="w-20 h-20 object-cover rounded-full border-4 border-blue-200"
+                onError={(e) => {
+                  console.error(`Failed to load image: ${contact.imageUrl}`);
+                  e.currentTarget.src = '/images/placeholder.png';
+                }}
               />
             </div>
             <div className="text-lg font-semibold text-gray-800">{contact.name}</div>
