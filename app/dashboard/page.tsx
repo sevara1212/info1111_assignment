@@ -8,13 +8,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 import { User } from "@/models/User";
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
-  const [userData, setUserData] = useState<User | null>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [stats, setStats] = useState({
     maintenanceRequests: 0,
@@ -22,6 +25,9 @@ export default function Dashboard() {
     notifications: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const [maintenanceRequests, setMaintenanceRequests] = useState<any[]>([]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -52,13 +58,15 @@ export default function Dashboard() {
           setUserData({ id: userDoc.id, ...userDoc.data() } as User);
         }
 
-        // Fetch maintenance requests
+        // Fetch maintenance requests (all for this user)
         const maintenanceQuery = query(
           collection(db, 'maintenance_requests'),
-          where('userId', '==', user.uid),
-          where('status', 'in', ['pending', 'in-progress'])
+          where('userId', '==', user.uid)
         );
         const maintenanceSnapshot = await getDocs(maintenanceQuery);
+        setMaintenanceRequests(
+          maintenanceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+        );
 
         // Fetch lift bookings
         const liftQuery = query(
@@ -90,6 +98,28 @@ export default function Dashboard() {
 
     fetchData();
   }, [user]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/auth/resident');
+        return;
+      }
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserData(userDoc.data());
+        } else {
+          setError('User data not found.');
+        }
+      } catch (err) {
+        setError('Failed to fetch user data.');
+      } finally {
+        setIsLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const features = [
     {
@@ -129,17 +159,14 @@ export default function Dashboard() {
     }
   ];
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please sign in to access the dashboard</h1>
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
-            Go to login
-          </Link>
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+  }
+  if (!userData) {
+    return null;
   }
 
   return (
@@ -287,6 +314,43 @@ export default function Dashboard() {
               </>
             )}
           </div>
+        </div>
+
+        {/* Maintenance Requests List */}
+        <div className="mt-12">
+          <h2 className="text-xl font-bold mb-4">Your Maintenance Requests</h2>
+          {maintenanceRequests.length === 0 ? (
+            <div className="text-gray-500">No maintenance requests yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white rounded-xl shadow-sm">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-2 text-left">Date</th>
+                    <th className="px-4 py-2 text-left">Issue</th>
+                    <th className="px-4 py-2 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {maintenanceRequests.map((req) => (
+                    <tr key={req.id} className="border-t">
+                      <td className="px-4 py-2">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : '-'}</td>
+                      <td className="px-4 py-2">{req.issue || req.description || '-'}</td>
+                      <td className="px-4 py-2">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                          req.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                          req.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {req.status || 'pending'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </main>
     </div>

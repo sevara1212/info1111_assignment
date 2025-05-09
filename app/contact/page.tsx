@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import styles from './page.module.css';
+import Image from 'next/image';
 
 const contacts = [
   {
@@ -104,6 +105,27 @@ export default function ContactPage() {
         <FaEnvelope className="text-blue-600" />
         Contact Building Management
       </h1>
+
+      {/* Contact People Squares */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+        {contacts.map((contact, idx) => (
+          <div key={idx} className="flex flex-col items-center bg-white rounded-xl shadow-md p-4">
+            <div className="w-20 h-20 relative mb-3">
+              <Image
+                src={contact.imageUrl.replace('public/', '/')}
+                alt={contact.name}
+                fill
+                className="object-cover rounded-full border-4 border-blue-200"
+                sizes="80px"
+              />
+            </div>
+            <div className="text-lg font-semibold text-gray-800">{contact.name}</div>
+            <div className="text-sm text-gray-500 mb-1">{contact.position}</div>
+            <div className="text-xs text-gray-400">{contact.email}</div>
+            <div className="text-xs text-gray-400">{contact.phone}</div>
+          </div>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Contact Information */}
