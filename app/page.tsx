@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { FaUser, FaShieldAlt } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import Image from 'next/image';
 
 export default function HomePage() {
@@ -13,7 +13,7 @@ export default function HomePage() {
         <div className="text-center">
           <div className="relative w-32 h-32 mx-auto mb-6">
             <Image
-              src="/images/sevara_apartments.png"
+              src="public/images/sevara_apartments.png"
               alt="Building"
               fill
               className="object-contain"
@@ -22,10 +22,10 @@ export default function HomePage() {
             />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Strata Management
+            Welcome to Sevara Apartments
           </h1>
           <p className="text-gray-600 mb-8">
-            Please select your role to continue
+            Please login to continue
           </p>
         </div>
 
@@ -36,14 +36,6 @@ export default function HomePage() {
           >
             <FaUser className="h-5 w-5" />
             Login as Resident
-          </button>
-
-          <button
-            onClick={() => router.push('/auth/admin')}
-            className="w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-3 text-lg transition-colors duration-200"
-          >
-            <FaShieldAlt className="h-5 w-5" />
-            Login as Admin
           </button>
         </div>
       </div>
