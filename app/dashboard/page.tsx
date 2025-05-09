@@ -3,18 +3,25 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp, FaSignOutAlt, FaFileDownload, FaElevator, FaEnvelope, FaTools } from "react-icons/fa";
+import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp, FaSignOutAlt, FaFileDownload, FaBuilding, FaEnvelope, FaTools, FaBars, FaTimes } from "react-icons/fa";
 import { useAuth } from "@/contexts/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 import { User } from "@/models/User";
 
 export default function Dashboard() {
-  const { user, signOut, userRole } = useAuth();
+  const { user, signOut } = useAuth();
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
   const [userData, setUserData] = useState<User | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [stats, setStats] = useState({
+    maintenanceRequests: 0,
+    liftBookings: 0,
+    notifications: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const updateTime = () => {
@@ -34,17 +41,54 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchData = async () => {
       if (!user) return;
+      setIsLoading(true);
 
-      const docRef = doc(db, 'users', user.uid);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setUserData({ id: docSnap.id, ...docSnap.data() } as User);
+      try {
+        // Fetch user data
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserData({ id: userDoc.id, ...userDoc.data() } as User);
+        }
+
+        // Fetch maintenance requests
+        const maintenanceQuery = query(
+          collection(db, 'maintenance_requests'),
+          where('userId', '==', user.uid),
+          where('status', 'in', ['pending', 'in-progress'])
+        );
+        const maintenanceSnapshot = await getDocs(maintenanceQuery);
+
+        // Fetch lift bookings
+        const liftQuery = query(
+          collection(db, 'lift_bookings'),
+          where('userId', '==', user.uid),
+          where('date', '>=', new Date().toISOString().split('T')[0])
+        );
+        const liftSnapshot = await getDocs(liftQuery);
+
+        // Fetch notifications
+        const notificationsQuery = query(
+          collection(db, 'notifications'),
+          where('userId', '==', user.uid),
+          where('read', '==', false)
+        );
+        const notificationsSnapshot = await getDocs(notificationsQuery);
+
+        setStats({
+          maintenanceRequests: maintenanceSnapshot.size,
+          liftBookings: liftSnapshot.size,
+          notifications: notificationsSnapshot.size
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchUserData();
+    fetchData();
   }, [user]);
 
   const features = [
@@ -65,7 +109,7 @@ export default function Dashboard() {
     {
       title: 'Book Lift',
       description: 'Schedule lift usage for moving or deliveries',
-      icon: FaElevator,
+      icon: FaBuilding,
       href: '/book-lift',
       color: 'bg-purple-500'
     },
@@ -100,7 +144,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="fixed top-0 left-0 h-full w-72 bg-white shadow-lg p-6">
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg"
+      >
+        {isMobileMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+      </button>
+
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 h-full w-72 bg-white shadow-lg p-6 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <FaUser className="text-blue-600 text-2xl" />
@@ -111,16 +166,20 @@ export default function Dashboard() {
           <p className="text-sm text-gray-500">Resident Portal</p>
         </div>
         <div className="space-y-2">
-          {features.map((feature) => (
-            <Link 
-              key={feature.title}
-              href={feature.href}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-all"
-            >
-              <FaSwimmingPool className="text-xl" />
-              <span>{feature.title}</span>
-            </Link>
-          ))}
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <Link 
+                key={feature.title}
+                href={feature.href}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-all"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Icon className="text-xl" />
+                <span>{feature.title}</span>
+              </Link>
+            );
+          })}
           <button
             onClick={signOut}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-red-600 transition-all"
@@ -131,22 +190,23 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="ml-72 p-8">
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <div className="flex justify-between items-start">
+      {/* Main Content */}
+      <main className="lg:ml-72 p-4 lg:p-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8 mb-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{greeting}, {userData?.name || 'Resident'}!</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{greeting}, {userData?.name || 'Resident'}!</h1>
               <p className="text-gray-500 mb-1">{currentDate}</p>
-              <p className="text-2xl font-semibold text-gray-900">{currentTime}</p>
+              <p className="text-xl lg:text-2xl font-semibold text-gray-900">{currentTime}</p>
               {userData && (
                 <p className="text-md mt-2 text-gray-600">
                   Apartment {userData.apartment}, Floor {userData.floor}
                 </p>
               )}
             </div>
-            <div className="relative w-96 h-48 rounded-xl overflow-hidden">
+            <div className="relative w-full lg:w-96 h-48 rounded-xl overflow-hidden">
               <Image
-                src="/images/building.png"
+                src="/images/sevara_apartments.png"
                 alt="Building"
                 fill
                 className="object-cover"
@@ -156,6 +216,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => {
             const Icon = feature.icon;
@@ -189,24 +250,42 @@ export default function Dashboard() {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Maintenance Requests
             </h3>
-            <p className="text-3xl font-bold text-blue-600">0</p>
-            <p className="text-sm text-gray-600 mt-1">Active requests</p>
+            {isLoading ? (
+              <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-blue-600">{stats.maintenanceRequests}</p>
+                <p className="text-sm text-gray-600 mt-1">Active requests</p>
+              </>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Lift Bookings
             </h3>
-            <p className="text-3xl font-bold text-purple-600">0</p>
-            <p className="text-sm text-gray-600 mt-1">Upcoming bookings</p>
+            {isLoading ? (
+              <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-purple-600">{stats.liftBookings}</p>
+                <p className="text-sm text-gray-600 mt-1">Upcoming bookings</p>
+              </>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Notifications
             </h3>
-            <p className="text-3xl font-bold text-yellow-600">0</p>
-            <p className="text-sm text-gray-600 mt-1">Unread messages</p>
+            {isLoading ? (
+              <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-yellow-600">{stats.notifications}</p>
+                <p className="text-sm text-gray-600 mt-1">Unread messages</p>
+              </>
+            )}
           </div>
         </div>
       </main>
