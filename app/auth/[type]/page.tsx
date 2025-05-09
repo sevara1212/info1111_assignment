@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
@@ -17,7 +17,17 @@ export default function LoginPage({ params }: { params: { type: string } }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, userData } = useAuth();
+
+  useEffect(() => {
+    if (user && userData) {
+      if (userData.role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, userData, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,10 +37,8 @@ export default function LoginPage({ params }: { params: { type: string } }) {
     try {
       if (isLogin) {
         await signIn(email, password);
-        // Role-based redirect will be handled by the AuthContext
       } else {
         await signUp(email, password, name, apartment, floor);
-        router.push('/dashboard');
       }
     } catch (err: any) {
       setError(err.message || (isLogin ? 'Invalid email or password' : 'Error creating account'));
@@ -45,7 +53,7 @@ export default function LoginPage({ params }: { params: { type: string } }) {
         <div className="text-center">
           <div className="relative w-32 h-32 mx-auto mb-6">
             <Image
-              src="/images/building.png"
+              src="public/images/sevara_apartments.png"
               alt="Building"
               fill
               className="object-contain"
