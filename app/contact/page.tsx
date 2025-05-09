@@ -6,7 +6,6 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import styles from './page.module.css';
-import Image from 'next/image';
 
 const contacts = [
   {
@@ -111,12 +110,10 @@ export default function ContactPage() {
         {contacts.map((contact, idx) => (
           <div key={idx} className="flex flex-col items-center bg-white rounded-xl shadow-md p-4">
             <div className="w-20 h-20 relative mb-3">
-              <Image
-                src={contact.imageUrl.replace('public/', '/')}
+              <img
+                src={contact.imageUrl}
                 alt={contact.name}
-                fill
-                className="object-cover rounded-full border-4 border-blue-200"
-                sizes="80px"
+                className="w-20 h-20 object-cover rounded-full border-4 border-blue-200"
               />
             </div>
             <div className="text-lg font-semibold text-gray-800">{contact.name}</div>
