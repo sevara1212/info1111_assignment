@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { FaUser, FaBuilding } from 'react-icons/fa';
+import { FaUser, FaShieldAlt } from 'react-icons/fa';
 import Image from 'next/image';
 
-export default function LandingPage() {
+export default function HomePage() {
   const router = useRouter();
 
   return (
@@ -21,9 +21,9 @@ export default function LandingPage() {
               sizes="(max-width: 128px) 100vw, 128px"
             />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Sevara Apartments
-          </h2>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome to Strata Management
+          </h1>
           <p className="text-gray-600 mb-8">
             Please select your role to continue
           </p>
@@ -32,17 +32,17 @@ export default function LandingPage() {
         <div className="space-y-4">
           <button
             onClick={() => router.push('/auth/resident')}
-            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-3 text-lg transition-colors duration-200"
           >
-            <FaUser className="mr-2" />
+            <FaUser className="h-5 w-5" />
             Login as Resident
           </button>
 
           <button
             onClick={() => router.push('/auth/admin')}
-            className="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+            className="w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-3 text-lg transition-colors duration-200"
           >
-            <FaBuilding className="mr-2" />
+            <FaShieldAlt className="h-5 w-5" />
             Login as Admin
           </button>
         </div>
