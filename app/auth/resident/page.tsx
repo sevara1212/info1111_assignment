@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { FaSpinner } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function LoginResident() {
   const [email, setEmail] = useState('');
@@ -16,12 +17,25 @@ export default function LoginResident() {
 
   useEffect(() => {
     // Check if user is already logged in
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Set auth token and role
-        document.cookie = `auth=${user.uid}; path=/`;
-        document.cookie = `userRole=resident; path=/`;
-        window.location.href = '/dashboard';
+        try {
+          // Verify user role in Firestore
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists() && userDoc.data().role === 'resident') {
+            // Set auth token and role
+            document.cookie = `auth=${user.uid}; path=/`;
+            document.cookie = `userRole=resident; path=/`;
+            window.location.href = '/dashboard';
+          } else {
+            // If user exists but is not a resident, sign them out
+            await auth.signOut();
+            setError('Access denied. This account is not registered as a resident.');
+          }
+        } catch (err) {
+          console.error('Error checking user role:', err);
+          setError('Error verifying user role');
+        }
       }
     });
 
@@ -34,25 +48,49 @@ export default function LoginResident() {
     setError('');
 
     try {
-      // Sign in with Firebase
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      const uid = userCred.user.uid;
+      // First, try to sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-      // Get user data from Firestore
-      const userDoc = await getDoc(doc(db, 'users', uid));
+      // Then verify the user's role in Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
       if (!userDoc.exists()) {
-        throw new Error('User not found');
+        throw new Error('User account not found');
+      }
+
+      const userData = userDoc.data();
+      if (userData.role !== 'resident') {
+        // If user is not a resident, sign them out
+        await auth.signOut();
+        throw new Error('Access denied. This account is not registered as a resident.');
       }
 
       // Set auth token and role in cookies
-      document.cookie = `auth=${uid}; path=/`;
+      document.cookie = `auth=${user.uid}; path=/`;
       document.cookie = `userRole=resident; path=/`;
 
       // Force a hard navigation to dashboard
       window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to login');
+      // Handle specific Firebase auth errors
+      switch (err.code) {
+        case 'auth/invalid-email':
+          setError('Invalid email address');
+          break;
+        case 'auth/user-disabled':
+          setError('This account has been disabled');
+          break;
+        case 'auth/user-not-found':
+          setError('No account found with this email');
+          break;
+        case 'auth/wrong-password':
+          setError('Incorrect password');
+          break;
+        default:
+          setError(err.message || 'Failed to login');
+      }
       setIsLoading(false);
     }
   };
@@ -94,8 +132,24 @@ export default function LoginResident() {
             'Login'
           )}
         </button>
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded text-sm">
+            {error}
+          </div>
+        )}
       </form>
+
+      <div className="mt-4 text-center">
+        <p className="text-gray-600">
+          Don't have an account?{' '}
+          <Link 
+            href="/auth/signup/resident" 
+            className="text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Create Account
+          </Link>
+        </p>
+      </div>
     </div>
   );
 } 
