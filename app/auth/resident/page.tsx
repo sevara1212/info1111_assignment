@@ -18,12 +18,13 @@ export default function LoginResident() {
     // Check if user is already logged in
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        router.push('/dashboard');
+        // Force a hard navigation to dashboard
+        window.location.href = '/dashboard';
       }
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +40,9 @@ export default function LoginResident() {
         throw new Error('User not found');
       }
 
+      // Set user role in cookie
+      document.cookie = `userRole=resident; path=/`;
+      
       // Force a hard navigation to dashboard
       window.location.href = '/dashboard';
     } catch (err: any) {

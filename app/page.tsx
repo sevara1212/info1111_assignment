@@ -2,9 +2,13 @@
 
 import { FaUser } from 'react-icons/fa';
 import Image from 'next/image';
-import Link from 'next/link';
 
 export default function HomePage() {
+  const handleLoginClick = () => {
+    // Force a full page navigation
+    window.location.replace('/auth/resident');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl mb-8">
@@ -28,13 +32,13 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-4">
-          <Link
-            href="/auth/resident"
+          <button
+            onClick={handleLoginClick}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl flex items-center justify-center gap-3 text-lg transition-colors duration-200"
           >
             <FaUser className="h-5 w-5" />
             Login as Resident
-          </Link>
+          </button>
         </div>
       </div>
     </div>
