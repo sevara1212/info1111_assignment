@@ -7,11 +7,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authCookie = request.cookies.get('auth');
+  // Get the auth token from cookies
+  const authToken = request.cookies.get('auth');
   const userRole = request.cookies.get('userRole');
 
-  // If no auth cookie, redirect to home
-  if (!authCookie) {
+  // If no auth token, redirect to home
+  if (!authToken) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -32,15 +33,12 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+// Only run middleware on specific paths
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/auth/:path*',
+    '/'
+  ]
 }; 

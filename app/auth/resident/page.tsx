@@ -18,7 +18,9 @@ export default function LoginResident() {
     // Check if user is already logged in
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        // Force a hard navigation to dashboard
+        // Set auth token and role
+        document.cookie = `auth=${user.uid}; path=/`;
+        document.cookie = `userRole=resident; path=/`;
         window.location.href = '/dashboard';
       }
     });
@@ -32,21 +34,25 @@ export default function LoginResident() {
     setError('');
 
     try {
+      // Sign in with Firebase
       const userCred = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCred.user.uid;
 
+      // Get user data from Firestore
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (!userDoc.exists()) {
         throw new Error('User not found');
       }
 
-      // Set user role in cookie
+      // Set auth token and role in cookies
+      document.cookie = `auth=${uid}; path=/`;
       document.cookie = `userRole=resident; path=/`;
-      
+
       // Force a hard navigation to dashboard
       window.location.href = '/dashboard';
     } catch (err: any) {
-      setError(err.message);
+      console.error('Login error:', err);
+      setError(err.message || 'Failed to login');
       setIsLoading(false);
     }
   };
