@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp, FaSignOutAlt } from "react-icons/fa";
+import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp, FaSignOutAlt, FaFileDownload, FaElevator, FaEnvelope, FaTools } from "react-icons/fa";
 import { useAuth } from "@/contexts/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { User } from "@/models/User";
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole } = useAuth();
   const [greeting, setGreeting] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
@@ -47,34 +47,41 @@ export default function Dashboard() {
     fetchUserData();
   }, [user]);
 
-  const navigationItems = [
-    { title: 'Dashboard', icon: <FaHome className="text-xl" />, link: '/' },
-    { title: 'Amenities', icon: <FaSwimmingPool className="text-xl" />, link: '/amenities' },
-    { title: 'Downloads', icon: <FaFileAlt className="text-xl" />, link: '/downloads' },
-    { title: 'Book Lift', icon: <FaArrowCircleUp className="text-xl" />, link: '/book-lift' },
-  ];
-
-  const actionCards = [
+  const features = [
     {
       title: 'Amenities',
-      icon: <div className="relative w-20 h-20 mb-4">
-              <Image src="/images/poolindoor.png" alt="Amenities" fill className="object-cover rounded-lg" />
-            </div>,
-      link: '/amenities'
+      description: 'Access building amenities and book facilities',
+      icon: FaSwimmingPool,
+      href: '/amenities',
+      color: 'bg-blue-500'
     },
     {
       title: 'Downloads',
-      icon: <div className="relative w-20 h-20 mb-4">
-              <Image src="/images/download.jpg" alt="Downloads" fill className="object-cover rounded-lg" />
-            </div>,
-      link: '/downloads'
+      description: 'Download important documents and forms',
+      icon: FaFileDownload,
+      href: '/downloads',
+      color: 'bg-green-500'
     },
     {
       title: 'Book Lift',
-      icon: <div className="relative w-20 h-20 mb-4">
-              <Image src="/images/book.jpg" alt="Book Lift" fill className="object-cover rounded-lg" />
-            </div>,
-      link: '/book-lift'
+      description: 'Schedule lift usage for moving or deliveries',
+      icon: FaElevator,
+      href: '/book-lift',
+      color: 'bg-purple-500'
+    },
+    {
+      title: 'Contact',
+      description: 'Get in touch with building management',
+      icon: FaEnvelope,
+      href: '/contact',
+      color: 'bg-yellow-500'
+    },
+    {
+      title: 'Maintenance',
+      description: 'Submit and track maintenance requests',
+      icon: FaTools,
+      href: '/maintenance',
+      color: 'bg-red-500'
     }
   ];
 
@@ -104,14 +111,14 @@ export default function Dashboard() {
           <p className="text-sm text-gray-500">Resident Portal</p>
         </div>
         <div className="space-y-2">
-          {navigationItems.map((item, index) => (
+          {features.map((feature) => (
             <Link 
-              href={item.link} 
-              key={index} 
+              key={feature.title}
+              href={feature.href}
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-all"
             >
-              {item.icon}
-              <span>{item.title}</span>
+              <FaSwimmingPool className="text-xl" />
+              <span>{feature.title}</span>
             </Link>
           ))}
           <button
@@ -150,16 +157,57 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {actionCards.map((card, index) => (
-            <Link 
-              href={card.link} 
-              key={index} 
-              className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform"
-            >
-              {card.icon}
-              <span className="text-lg font-medium text-gray-900">{card.title}</span>
-            </Link>
-          ))}
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <Link
+                key={feature.title}
+                href={feature.href}
+                className="block group"
+              >
+                <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                  <div className={`${feature.color} p-6`}>
+                    <Icon className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                      {feature.title}
+                    </h3>
+                    <p className="mt-2 text-gray-600">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Quick Stats Section */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Maintenance Requests
+            </h3>
+            <p className="text-3xl font-bold text-blue-600">0</p>
+            <p className="text-sm text-gray-600 mt-1">Active requests</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Lift Bookings
+            </h3>
+            <p className="text-3xl font-bold text-purple-600">0</p>
+            <p className="text-sm text-gray-600 mt-1">Upcoming bookings</p>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Notifications
+            </h3>
+            <p className="text-3xl font-bold text-yellow-600">0</p>
+            <p className="text-sm text-gray-600 mt-1">Unread messages</p>
+          </div>
         </div>
       </main>
     </div>
