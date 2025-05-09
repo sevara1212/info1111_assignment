@@ -2,47 +2,45 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Link from 'next/link';
-import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaBuilding, FaLayerGroup } from 'react-icons/fa';
 import Image from 'next/image';
 
-export default function LoginPage({ params }: { params: { type: string } }) {
+export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [apartment, setApartment] = useState('');
+  const [floor, setFloor] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      const userDoc = await getDoc(doc(db, 'users', userCred.user.uid));
+      // Create user account
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-      if (!userDoc.exists()) {
-        throw new Error("User data not found");
-      }
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', userCred.user.uid), {
+        name,
+        email,
+        apartment: parseInt(apartment),
+        floor: parseInt(floor),
+        role: 'resident',
+        createdAt: new Date(),
+      });
 
-      const userData = userDoc.data();
-      const role = userData.role;
-
-      if (params.type === 'admin' && role !== 'admin') {
-        throw new Error('You are not authorized to access the admin area.');
-      }
-
-      if (params.type === 'resident' && role !== 'resident') {
-        throw new Error('You are not authorized to access the resident area.');
-      }
-
-      router.push(role === 'admin' ? '/admin/dashboard' : '/dashboard');
+      router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      setError(err.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }
@@ -63,20 +61,41 @@ export default function LoginPage({ params }: { params: { type: string } }) {
             />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
+            Create Account
           </h2>
           <p className="text-gray-600">
-            Sign in as {params.type.charAt(0).toUpperCase() + params.type.slice(1)}
+            Join our community
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-xl text-sm flex items-center">
               <span className="mr-2">⚠️</span>
               {error}
             </div>
           )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaUser className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="John Doe"
+              />
+            </div>
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -112,13 +131,56 @@ export default function LoginPage({ params }: { params: { type: string } }) {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="••••••••"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="apartment" className="block text-sm font-medium text-gray-700 mb-1">
+                Apartment
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaBuilding className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="apartment"
+                  name="apartment"
+                  type="number"
+                  required
+                  value={apartment}
+                  onChange={(e) => setApartment(e.target.value)}
+                  className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="101"
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="floor" className="block text-sm font-medium text-gray-700 mb-1">
+                Floor
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaLayerGroup className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="floor"
+                  name="floor"
+                  type="number"
+                  required
+                  value={floor}
+                  onChange={(e) => setFloor(e.target.value)}
+                  className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="1"
+                />
+              </div>
             </div>
           </div>
 
@@ -133,23 +195,21 @@ export default function LoginPage({ params }: { params: { type: string } }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing in...
+                Creating account...
               </span>
             ) : (
-              'Sign in'
+              'Create Account'
             )}
           </button>
 
-          {params.type === 'resident' && (
-            <div className="text-center">
-              <Link
-                href="/auth/signup/resident"
-                className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
-              >
-                Don't have an account? Sign up
-              </Link>
-            </div>
-          )}
+          <div className="text-center">
+            <Link
+              href="/auth/resident"
+              className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
+            >
+              Already have an account? Sign in
+            </Link>
+          </div>
         </form>
       </div>
 
