@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, getDocs, addDoc, Timestamp } from 'firebase/firestore';
 import { FaTools, FaSpinner, FaPlus } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 interface MaintenanceRequest {
   id: string;
@@ -16,6 +17,7 @@ interface MaintenanceRequest {
 
 export default function MaintenancePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,10 +27,12 @@ export default function MaintenancePage() {
   const [description, setDescription] = useState('');
 
   useEffect(() => {
-    if (user) {
-      fetchRequests();
+    if (!user) {
+      router.push('/auth/resident');
+      return;
     }
-  }, [user]);
+    fetchRequests();
+  }, [user, router]);
 
   const fetchRequests = async () => {
     setLoading(true);

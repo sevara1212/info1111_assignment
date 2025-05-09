@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { FaUsers, FaSearch, FaSpinner } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 interface Owner {
   id: string;
@@ -18,16 +19,23 @@ interface Owner {
 
 export default function StrataRollPage() {
   const { userData, isAdmin } = useAuth();
+  const router = useRouter();
   const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (isAdmin) {
-      fetchOwners();
+    if (!userData) {
+      router.push('/auth/admin');
+      return;
     }
-  }, [isAdmin]);
+    if (!isAdmin) {
+      router.push('/dashboard');
+      return;
+    }
+    fetchOwners();
+  }, [userData, isAdmin, router]);
 
   const fetchOwners = async () => {
     setLoading(true);
