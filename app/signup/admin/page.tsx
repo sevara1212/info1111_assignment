@@ -2,47 +2,62 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Link from 'next/link';
-import { FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaShieldAlt } from 'react-icons/fa';
 import Image from 'next/image';
 
-export default function LoginPage({ params }: { params: { type: string } }) {
+export default function AdminSignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [adminCode, setAdminCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
+    // Validate admin code
+    if (adminCode !== 'ADMIN123') { // You should change this to a more secure code
+      setError('Invalid admin code');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      const userDoc = await getDoc(doc(db, 'users', userCred.user.uid));
+      // Create user account
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-      if (!userDoc.exists()) {
-        throw new Error("User data not found");
-      }
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', userCred.user.uid), {
+        name,
+        email,
+        role: 'admin',
+        createdAt: new Date(),
+      });
 
-      const userData = userDoc.data();
-      const role = userData.role;
-
-      if (params.type === 'admin' && role !== 'admin') {
-        throw new Error('You are not authorized to access the admin area.');
-      }
-
-      if (params.type === 'resident' && role !== 'resident') {
-        throw new Error('You are not authorized to access the resident area.');
-      }
-
-      router.push(role === 'admin' ? '/admin/dashboard' : '/dashboard');
+      router.push('/admin/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      setError(err.message || 'Failed to create account');
     } finally {
       setIsLoading(false);
     }
@@ -63,20 +78,41 @@ export default function LoginPage({ params }: { params: { type: string } }) {
             />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
+            Create Admin Account
           </h2>
           <p className="text-gray-600">
-            Sign in as {params.type.charAt(0).toUpperCase() + params.type.slice(1)}
+            Join our management team
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+        <form className="mt-8 space-y-6" onSubmit={handleSignup}>
           {error && (
             <div className="bg-red-50 text-red-500 p-4 rounded-xl text-sm flex items-center">
               <span className="mr-2">⚠️</span>
               {error}
             </div>
           )}
+
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaUser className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="John Doe"
+              />
+            </div>
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -112,12 +148,55 @@ export default function LoginPage({ params }: { params: { type: string } }) {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="••••••••"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaLock className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="adminCode" className="block text-sm font-medium text-gray-700 mb-1">
+              Admin Code
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaShieldAlt className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                id="adminCode"
+                name="adminCode"
+                type="password"
+                required
+                value={adminCode}
+                onChange={(e) => setAdminCode(e.target.value)}
+                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter admin code"
               />
             </div>
           </div>
@@ -133,19 +212,19 @@ export default function LoginPage({ params }: { params: { type: string } }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Signing in...
+                Creating account...
               </span>
             ) : (
-              'Sign in'
+              'Create Account'
             )}
           </button>
 
           <div className="text-center">
             <Link
-              href={`/signup/${params.type}`}
+              href="/auth/admin"
               className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
             >
-              Don't have an account? Sign up
+              Already have an account? Sign in
             </Link>
           </div>
         </form>
