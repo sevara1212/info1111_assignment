@@ -1,233 +1,30 @@
 "use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import Image from 'next/image';
-import Link from 'next/link';
-import { FaBuilding, FaUser, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
+import Link from "next/link";
+import { FaUser, FaShieldAlt } from "react-icons/fa";
 
-export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [apartment, setApartment] = useState('');
-  const [floor, setFloor] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-    
-    try {
-      if (isLogin) {
-        await signIn(email, password);
-      } else {
-        await signUp(email, password, name, apartment, floor);
-      }
-    } catch (err: any) {
-      setError(err.message || (isLogin ? 'Invalid email or password' : 'Error creating account'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl mb-8">
-        <div className="text-center">
-          <div className="relative w-32 h-32 mx-auto mb-6">
-            <Image
-              src="/images/building.png"
-              alt="Building"
-              fill
-              className="object-contain"
-              priority
-              sizes="(max-width: 128px) 100vw, 128px"
-            />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h2>
-          <p className="text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Join our community'}
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-6">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Welcome to Strata Management</h1>
+      
+      <div className="flex gap-6">
+        <Link
+          href="/auth/resident"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-2 text-lg transition-all"
+        >
+          <FaUser />
+          Login as Resident
+        </Link>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-500 p-4 rounded-xl text-sm flex items-center">
-              <span className="mr-2">⚠️</span>
-              {error}
-            </div>
-          )}
-          
-          {!isLogin && (
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaUser className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="John Doe"
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email address
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaEnvelope className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={isLogin ? "current-password" : "new-password"}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
-
-          {!isLogin && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="apartment" className="block text-sm font-medium text-gray-700 mb-1">
-                  Apartment
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaBuilding className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="apartment"
-                    name="apartment"
-                    type="number"
-                    required
-                    value={apartment}
-                    onChange={(e) => setApartment(e.target.value)}
-                    className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="101"
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="floor" className="block text-sm font-medium text-gray-700 mb-1">
-                  Floor
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaBuilding className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    id="floor"
-                    name="floor"
-                    type="number"
-                    required
-                    value={floor}
-                    onChange={(e) => setFloor(e.target.value)}
-                    className="pl-10 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="1"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {isLogin ? 'Signing in...' : 'Creating account...'}
-              </span>
-            ) : (
-              isLogin ? 'Sign in' : 'Create Account'
-            )}
-          </button>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-              }}
-              className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
-            >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-            </button>
-          </div>
-        </form>
+        <Link
+          href="/auth/admin"
+          className="bg-gray-800 hover:bg-gray-900 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-2 text-lg transition-all"
+        >
+          <FaShieldAlt />
+          Login as Admin
+        </Link>
       </div>
-
-      {isLogin && (
-        <div className="max-w-md w-full p-8 bg-white rounded-2xl shadow-xl">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">New to Strata Management?</h3>
-            <p className="text-gray-600 mb-6">Create an account to access all features</p>
-            <button
-              onClick={() => {
-                setIsLogin(false);
-                setError('');
-              }}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
-            >
-              Create New Account
-              <FaArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
