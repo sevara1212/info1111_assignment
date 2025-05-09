@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import Link from 'next/link';
@@ -14,6 +14,7 @@ export default function LoginPage({ params }: { params: { type: string } }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -48,6 +49,21 @@ export default function LoginPage({ params }: { params: { type: string } }) {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setResetSent(true);
+      setError('');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl mb-8">
@@ -75,6 +91,13 @@ export default function LoginPage({ params }: { params: { type: string } }) {
             <div className="bg-red-50 text-red-500 p-4 rounded-xl text-sm flex items-center">
               <span className="mr-2">⚠️</span>
               {error}
+            </div>
+          )}
+
+          {resetSent && (
+            <div className="bg-green-50 text-green-600 p-4 rounded-xl text-sm flex items-center">
+              <span className="mr-2">✓</span>
+              Password reset email sent! Please check your inbox.
             </div>
           )}
 
@@ -140,7 +163,15 @@ export default function LoginPage({ params }: { params: { type: string } }) {
             )}
           </button>
 
-          <div className="text-center">
+          <div className="flex flex-col space-y-4 text-center">
+            <button
+              type="button"
+              onClick={handleResetPassword}
+              className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
+            >
+              Forgot your password?
+            </button>
+
             <Link
               href={`/signup/${params.type}`}
               className="text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200"
