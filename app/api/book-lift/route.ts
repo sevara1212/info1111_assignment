@@ -1,5 +1,3 @@
-export const runtime = 'edge';
-
 export async function POST(request: Request) {
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });

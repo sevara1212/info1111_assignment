@@ -13,7 +13,7 @@ export default function BookLift() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/edge/book-lift', {
+      const res = await fetch('/api/book-lift', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

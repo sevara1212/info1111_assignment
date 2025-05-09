@@ -15,7 +15,7 @@ const contacts = [
     email: "security@sevara.apartments",
     phone: "04 0000 0001",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "/images/security.png",
+    imageUrl: "public/images/security.png",
   },
   {
     position: "Strata Manager",
@@ -24,7 +24,7 @@ const contacts = [
     email: "stratamanager@sevara.apartments",
     phone: "04 0000 0002",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "/images/stratamanager.png",
+    imageUrl: "public/images/stratamanager.png",
   },
   {
     position: "Building Manager",
@@ -33,7 +33,7 @@ const contacts = [
     email: "buildingmanager@sevara.apartments",
     phone: "04 0000 0003",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "/images/buildingmanager.png",
+    imageUrl: "public/images/buildingmanager.png",
   },
   {
     position: "Chairperson",
@@ -42,7 +42,7 @@ const contacts = [
     email: "chairperson@sevara.apartments",
     phone: "04 0000 0004",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "/images/chairperson.png",
+    imageUrl: "public/images/chairperson.png",
   },
   {
     position: "Secretary",
@@ -51,7 +51,7 @@ const contacts = [
     email: "secretary@sevara.apartments",
     phone: "04 0000 0005",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "/images/secretary.png",
+    imageUrl: "public/images/secretary.png",
   },
   {
     position: "Treasurer",
@@ -60,7 +60,7 @@ const contacts = [
     email: "treasurer@sevara.apartments",
     phone: "04 0000 0006",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "/images/treasurer.png",
+    imageUrl: "public/images/treasurer.png",
   },
 ];
 
