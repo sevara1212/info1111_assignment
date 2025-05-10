@@ -26,7 +26,7 @@ export default function LoginResident() {
             // Set auth token and role
             document.cookie = `auth=${user.uid}; path=/`;
             document.cookie = `userRole=resident; path=/`;
-            window.location.href = '/dashboard';
+            router.push('/dashboard');
           } else {
             // If user exists but is not a resident, sign them out
             await auth.signOut();
@@ -40,7 +40,7 @@ export default function LoginResident() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +70,8 @@ export default function LoginResident() {
       document.cookie = `auth=${user.uid}; path=/`;
       document.cookie = `userRole=resident; path=/`;
 
-      // Force a hard navigation to dashboard
-      window.location.href = '/dashboard';
+      // Use Next.js router for navigation
+      router.push('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
       // Handle specific Firebase auth errors
@@ -91,6 +91,7 @@ export default function LoginResident() {
         default:
           setError(err.message || 'Failed to login');
       }
+    } finally {
       setIsLoading(false);
     }
   };
