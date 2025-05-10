@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 import { FaSpinner } from 'react-icons/fa';
 import Link from 'next/link';
 
@@ -14,28 +12,18 @@ export default function LoginResident() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { user, userData, signIn } = useAuth();
 
   // Check if user is already logged in
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists() && userDoc.data().role === 'resident') {
-            router.replace('/dashboard');
-          } else {
-            await auth.signOut();
-            setError('Access denied. This account is not registered as a resident.');
-          }
-        } catch (err) {
-          console.error('Error checking user role:', err);
-          setError('Error verifying user role');
-        }
+    if (user && userData) {
+      if (userData.role === 'resident') {
+        router.replace('/dashboard');
+      } else {
+        setError('Access denied. This account is not registered as a resident.');
       }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+    }
+  }, [user, userData, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,34 +36,8 @@ export default function LoginResident() {
     setError('');
 
     try {
-      // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      if (!user) {
-        throw new Error('Login failed');
-      }
-
-      // Verify user role in Firestore
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
-      if (!userDoc.exists()) {
-        await auth.signOut();
-        throw new Error('User account not found');
-      }
-
-      const userData = userDoc.data();
-      if (userData.role !== 'resident') {
-        await auth.signOut();
-        throw new Error('Access denied. This account is not registered as a resident.');
-      }
-
-      // Set cookies for authentication
-      document.cookie = `auth=${user.uid}; path=/`;
-      document.cookie = `userRole=resident; path=/`;
-
-      // Force a hard navigation to dashboard
-      window.location.href = '/dashboard';
+      await signIn(email, password);
+      // The AuthContext will handle the redirection
     } catch (err: any) {
       console.error('Login error:', err);
       switch (err.code) {
