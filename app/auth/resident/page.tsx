@@ -15,20 +15,15 @@ export default function LoginResident() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Check if user is already logged in
   useEffect(() => {
-    // Check if user is already logged in
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
-          // Verify user role in Firestore
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists() && userDoc.data().role === 'resident') {
-            // Set auth token and role
-            document.cookie = `auth=${user.uid}; path=/`;
-            document.cookie = `userRole=resident; path=/`;
-            router.push('/dashboard');
+            router.replace('/dashboard');
           } else {
-            // If user exists but is not a resident, sign them out
             await auth.signOut();
             setError('Access denied. This account is not registered as a resident.');
           }
@@ -44,37 +39,45 @@ export default function LoginResident() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     try {
-      // First, try to sign in with Firebase
+      // Sign in with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Then verify the user's role in Firestore
+      if (!user) {
+        throw new Error('Login failed');
+      }
+
+      // Verify user role in Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       
       if (!userDoc.exists()) {
+        await auth.signOut();
         throw new Error('User account not found');
       }
 
       const userData = userDoc.data();
       if (userData.role !== 'resident') {
-        // If user is not a resident, sign them out
         await auth.signOut();
         throw new Error('Access denied. This account is not registered as a resident.');
       }
 
-      // Set auth token and role in cookies
+      // Set cookies for authentication
       document.cookie = `auth=${user.uid}; path=/`;
       document.cookie = `userRole=resident; path=/`;
 
-      // Use Next.js router for navigation
-      router.push('/dashboard');
+      // Force a hard navigation to dashboard
+      window.location.href = '/dashboard';
     } catch (err: any) {
       console.error('Login error:', err);
-      // Handle specific Firebase auth errors
       switch (err.code) {
         case 'auth/invalid-email':
           setError('Invalid email address');
@@ -97,59 +100,76 @@ export default function LoginResident() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <h2 className="text-2xl font-bold mb-4">Resident Login</h2>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+        <h2 className="text-2xl font-bold mb-6 text-center">Resident Login</h2>
 
-      <form onSubmit={handleLogin} className="space-y-4 w-full max-w-sm">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-          required
-          disabled={isLoading}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className="w-full px-4 py-2 border rounded"
-          required
-          disabled={isLoading}
-        />
-        <button 
-          className="w-full bg-blue-600 text-white py-2 rounded flex items-center justify-center gap-2 disabled:opacity-50" 
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <FaSpinner className="animate-spin" />
-              Logging in...
-            </>
-          ) : (
-            'Login'
-          )}
-        </button>
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded text-sm">
-            {error}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
           </div>
-        )}
-      </form>
 
-      <div className="mt-4 text-center">
-        <p className="text-gray-600">
-          Don't have an account?{' '}
-          <Link 
-            href="/auth/signup/resident" 
-            className="text-blue-600 hover:text-blue-800 font-medium"
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <button 
+            className="w-full bg-blue-600 text-white py-2 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition-colors" 
+            type="submit"
+            disabled={isLoading}
           >
-            Create Account
-          </Link>
-        </p>
+            {isLoading ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              'Login'
+            )}
+          </button>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <Link 
+              href="/auth/signup/resident" 
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Create Account
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
