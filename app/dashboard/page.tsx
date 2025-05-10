@@ -11,6 +11,7 @@ import { User } from "@/models/User";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Cookies from 'js-cookie';
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
@@ -159,6 +160,16 @@ export default function Dashboard() {
     }
   ];
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      Cookies.remove('user');
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -208,7 +219,7 @@ export default function Dashboard() {
             );
           })}
           <button
-            onClick={signOut}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-red-600 transition-all"
           >
             <FaSignOutAlt className="text-xl" />

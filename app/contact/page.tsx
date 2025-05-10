@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import styles from './page.module.css';
+import { useRouter } from 'next/navigation';
 
 const contacts = [
   {
@@ -15,7 +16,7 @@ const contacts = [
     email: "security@sevara.apartments",
     phone: "04 0000 0001",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "./images/security.png",
+    imageUrl: "/images/security.png",
   },
   {
     position: "Strata Manager",
@@ -24,7 +25,7 @@ const contacts = [
     email: "stratamanager@sevara.apartments",
     phone: "04 0000 0002",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "./images/stratamanager.png",
+    imageUrl: "/images/stratamanager.png",
   },
   {
     position: "Building Manager",
@@ -33,7 +34,7 @@ const contacts = [
     email: "buildingmanager@sevara.apartments",
     phone: "04 0000 0003",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "./images/buildingmanager.png",
+    imageUrl: "/images/buildingmanager.png",
   },
   {
     position: "Chairperson",
@@ -42,7 +43,7 @@ const contacts = [
     email: "chairperson@sevara.apartments",
     phone: "04 0000 0004",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "./images/chairperson.png",
+    imageUrl: "/images/chairperson.png",
   },
   {
     position: "Secretary",
@@ -51,7 +52,7 @@ const contacts = [
     email: "secretary@sevara.apartments",
     phone: "04 0000 0005",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "./images/secretary.png",
+    imageUrl: "/images/secretary.png",
   },
   {
     position: "Treasurer",
@@ -60,27 +61,41 @@ const contacts = [
     email: "treasurer@sevara.apartments",
     phone: "04 0000 0006",
     bgColor: "bg-[#2E6DB4]",
-    imageUrl: "./images/treasurer.png",
+    imageUrl: "/images/treasurer.png",
   },
 ];
 
 export default function ContactPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth/resident');
+    }
+  }, [user, loading, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      setError('Please log in to send a message');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     setSuccess(false);
 
     try {
       await addDoc(collection(db, 'contact_messages'), {
-        userId: user?.uid,
+        userId: user.uid,
+        userEmail: user.email,
         subject,
         message,
         status: 'unread',
@@ -97,6 +112,18 @@ export default function ContactPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <FaSpinner className="animate-spin text-4xl text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
