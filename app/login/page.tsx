@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { user, userData, signIn, loading } = useAuth();
+  const { user, userData, loading, signIn } = useAuth();
 
   // Check if user is already logged in
   useEffect(() => {
