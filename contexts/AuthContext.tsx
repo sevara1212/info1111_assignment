@@ -80,15 +80,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        setUserData({ id: userCredential.user.uid, ...userData } as UserData);
         if (userData.role === 'admin') {
           router.push('/admin/dashboard');
         } else {
           router.push('/dashboard');
         }
       } else {
+        setUserData(null);
         throw new Error('User data not found');
       }
     } catch (error) {
+      setUserData(null);
       console.error('Error signing in:', error);
       throw error;
     }
