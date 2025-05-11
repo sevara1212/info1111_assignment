@@ -72,6 +72,11 @@ export default function LoginResident() {
     );
   }
 
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
