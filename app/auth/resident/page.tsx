@@ -12,20 +12,20 @@ export default function LoginResident() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { user, userData, signIn, loading } = useAuth();
+  const { user, userRole, signIn, loading } = useAuth();
 
   // Check if user is already logged in
   useEffect(() => {
     if (!loading) {
-      if (user && userData) {
-        if (userData.role === 'resident') {
+      if (user && userRole) {
+        if (userRole === 'resident') {
           router.replace('/dashboard');
         } else {
           setError('Access denied. This account is not registered as a resident.');
         }
       }
     }
-  }, [user, userData, loading, router]);
+  }, [user, userRole, loading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

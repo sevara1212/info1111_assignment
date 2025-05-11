@@ -244,7 +244,7 @@ export default function Dashboard() {
             </div>
             <div className="relative w-full lg:w-96 h-48 rounded-xl overflow-hidden">
               <Image
-                src="sevara_apartments.png"
+                src="/images/sevara_apartments.jpg"
                 alt="Building"
                 fill
                 className="object-cover"

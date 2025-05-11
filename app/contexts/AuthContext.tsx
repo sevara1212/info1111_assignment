@@ -31,28 +31,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
+    console.log('AuthProvider mounted');
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
+      console.log('Auth state changed:', currentUser?.email);
+      setUser(currentUser);
       
-      if (user) {
-        // Fetch user role from Firestore
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const role = userDoc.data().role;
-          setUserRole(role);
-          
-          // Set cookies for middleware
-          Cookies.set('auth', 'true', { expires: 7 });
-          Cookies.set('userRole', role, { expires: 7 });
-          
-          // Redirect based on role
-          if (role === 'admin') {
-            router.push('/admin');
+      if (currentUser) {
+        try {
+          console.log('Fetching user data for:', currentUser.uid);
+          // Fetch user role from Firestore
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            const role = userDoc.data().role;
+            console.log('User role:', role);
+            setUserRole(role);
+            
+            // Set cookies for middleware
+            Cookies.set('auth', 'true', { expires: 7 });
+            Cookies.set('userRole', role, { expires: 7 });
+            
+            // Redirect based on role
+            if (role === 'admin') {
+              console.log('Redirecting to admin dashboard');
+              router.push('/admin');
+            } else {
+              console.log('Redirecting to resident dashboard');
+              router.push('/dashboard');
+            }
           } else {
-            router.push('/dashboard');
+            console.error('User document not found in Firestore');
+            setUserRole(null);
+            Cookies.remove('auth');
+            Cookies.remove('userRole');
           }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setUserRole(null);
+          Cookies.remove('auth');
+          Cookies.remove('userRole');
         }
       } else {
+        console.log('No user logged in');
         setUserRole(null);
         Cookies.remove('auth');
         Cookies.remove('userRole');
@@ -61,19 +80,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log('AuthProvider unmounting');
+      unsubscribe();
+    };
   }, [router]);
 
   const signIn = async (email: string, password: string) => {
+    console.log('Attempting sign in for:', email);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Firebase auth successful:', userCredential.user.uid);
+      
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      console.log('Firestore document exists:', userDoc.exists());
       
       if (!userDoc.exists()) {
         throw new Error('User data not found');
       }
       
       const role = userDoc.data().role;
+      console.log('User role:', role);
       setUserRole(role);
       
       // Set cookies for middleware
@@ -82,18 +109,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Redirect based on role
       if (role === 'admin') {
+        console.log('Redirecting to admin dashboard');
         router.push('/admin');
       } else {
+        console.log('Redirecting to resident dashboard');
         router.push('/dashboard');
       }
     } catch (error: any) {
-      throw new Error(error.message);
+      console.error('Login error:', error);
+      throw new Error(error.message || 'Failed to sign in');
     }
   };
 
   const signUp = async (email: string, password: string, name: string, apartment: string, floor: string) => {
+    console.log('Attempting sign up for:', email);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Firebase auth successful:', userCredential.user.uid);
       
       // Create user document in Firestore
       await setDoc(doc(db, 'users', userCredential.user.uid), {
@@ -104,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: 'resident', // Default role for new users
         createdAt: new Date().toISOString()
       });
+      console.log('Firestore document created');
       
       setUserRole('resident');
       
@@ -111,22 +144,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       Cookies.set('auth', 'true', { expires: 7 });
       Cookies.set('userRole', 'resident', { expires: 7 });
       
+      console.log('Redirecting to dashboard');
       router.push('/dashboard');
     } catch (error: any) {
-      throw new Error(error.message);
+      console.error('Signup error:', error);
+      throw new Error(error.message || 'Failed to sign up');
     }
   };
 
   const logout = async () => {
+    console.log('Attempting logout');
     try {
       await signOut(auth);
       setUser(null);
       setUserRole(null);
       Cookies.remove('auth');
       Cookies.remove('userRole');
+      console.log('Redirecting to home');
       router.push('/');
     } catch (error: any) {
-      throw new Error(error.message);
+      console.error('Logout error:', error);
+      throw new Error(error.message || 'Failed to log out');
     }
   };
 
