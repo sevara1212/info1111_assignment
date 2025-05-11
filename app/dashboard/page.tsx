@@ -1,370 +1,149 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp, FaSignOutAlt, FaFileDownload, FaBuilding, FaEnvelope, FaTools, FaBars, FaTimes } from "react-icons/fa";
-import { useAuth } from "@/contexts/AuthContext";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { User } from "@/models/User";
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import Cookies from 'js-cookie';
+import { useAuth } from '@/contexts/AuthContext';
+import { FaSpinner } from 'react-icons/fa';
+import Link from 'next/link';
 
-export default function Dashboard() {
-  const { user, signOut } = useAuth();
-  const [greeting, setGreeting] = useState('');
-  const [currentTime, setCurrentTime] = useState('');
-  const [currentDate, setCurrentDate] = useState('');
-  const [userData, setUserData] = useState<any>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [stats, setStats] = useState({
-    maintenanceRequests: 0,
-    liftBookings: 0,
-    notifications: 0
-  });
-  const [isLoading, setIsLoading] = useState(true);
+export default function LoginResident() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const [maintenanceRequests, setMaintenanceRequests] = useState<any[]>([]);
+  const { user, userRole, signIn, loading } = useAuth();
 
+  // Check if user is already logged in
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const hour = now.getHours();
-      if (hour < 12) setGreeting('Good Morning');
-      else if (hour < 18) setGreeting('Good Afternoon');
-      else setGreeting('Good Evening');
-
-      setCurrentTime(now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }));
-      setCurrentDate(now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-      setIsLoading(true);
-
-      try {
-        // Fetch user data
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData({ id: userDoc.id, ...userDoc.data() } as User);
-        }
-
-        // Fetch maintenance requests (all for this user)
-        const maintenanceQuery = query(
-          collection(db, 'maintenance_requests'),
-          where('userId', '==', user.uid)
-        );
-        const maintenanceSnapshot = await getDocs(maintenanceQuery);
-        setMaintenanceRequests(
-          maintenanceSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-        );
-
-        // Fetch lift bookings
-        const liftQuery = query(
-          collection(db, 'lift_bookings'),
-          where('userId', '==', user.uid),
-          where('date', '>=', new Date().toISOString().split('T')[0])
-        );
-        const liftSnapshot = await getDocs(liftQuery);
-
-        // Fetch notifications
-        const notificationsQuery = query(
-          collection(db, 'notifications'),
-          where('userId', '==', user.uid),
-          where('read', '==', false)
-        );
-        const notificationsSnapshot = await getDocs(notificationsQuery);
-
-        setStats({
-          maintenanceRequests: maintenanceSnapshot.size,
-          liftBookings: liftSnapshot.size,
-          notifications: notificationsSnapshot.size
-        });
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        router.push('/auth/resident');
-        return;
-      }
-      try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
+    if (!loading) {
+      if (user && userRole) {
+        if (userRole === 'resident') {
+          router.replace('/dashboard');
         } else {
-          setError('User data not found.');
+          setError('Access denied. This account is not registered as a resident.');
         }
-      } catch (err) {
-        setError('Failed to fetch user data.');
-      } finally {
-        setIsLoading(false);
       }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  const features = [
-    {
-      title: 'Amenities',
-      description: 'Access building amenities and book facilities',
-      icon: FaSwimmingPool,
-      href: '/amenities',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Downloads',
-      description: 'Download important documents and forms',
-      icon: FaFileDownload,
-      href: '/downloads',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Book Lift',
-      description: 'Schedule lift usage for moving or deliveries',
-      icon: FaBuilding,
-      href: '/book-lift',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Contact',
-      description: 'Get in touch with building management',
-      icon: FaEnvelope,
-      href: '/contact',
-      color: 'bg-yellow-500'
-    },
-    {
-      title: 'Maintenance',
-      description: 'Submit and track maintenance requests',
-      icon: FaTools,
-      href: '/maintenance',
-      color: 'bg-red-500'
     }
-  ];
+  }, [user, userRole, loading, router]);
 
-  const handleLogout = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
     try {
-      await signOut();
-      Cookies.remove('user');
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
+      await signIn(email, password);
+      // The AuthContext will handle the redirection
+    } catch (err: any) {
+      console.error('Login error:', err);
+      switch (err.code) {
+        case 'auth/invalid-email':
+          setError('Invalid email address');
+          break;
+        case 'auth/user-disabled':
+          setError('This account has been disabled');
+          break;
+        case 'auth/user-not-found':
+          setError('No account found with this email');
+          break;
+        case 'auth/wrong-password':
+          setError('Incorrect password');
+          break;
+        default:
+          setError(err.message || 'Failed to login');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-  if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
-  }
-  if (!userData) {
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <FaSpinner className="animate-spin text-4xl text-blue-600" />
+        <span className="ml-4 text-lg text-gray-700">Checking authentication...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-lg"
-      >
-        {isMobileMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
-      </button>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
+        <h2 className="text-2xl font-bold mb-6 text-center">Resident Login</h2>
 
-      {/* Navigation */}
-      <nav className={`fixed top-0 left-0 h-full w-72 bg-white shadow-lg p-6 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <FaUser className="text-blue-600 text-2xl" />
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Welcome, {userData?.name || 'Resident'}
-          </h2>
-          <p className="text-sm text-gray-500">Resident Portal</p>
-        </div>
-        <div className="space-y-2">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <Link 
-                key={feature.title}
-                href={feature.href}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Icon className="text-xl" />
-                <span>{feature.title}</span>
-              </Link>
-            );
-          })}
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-red-600 transition-all"
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <button 
+            className="w-full bg-blue-600 text-white py-2 rounded-md flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition-colors" 
+            type="submit"
+            disabled={isLoading}
           >
-            <FaSignOutAlt className="text-xl" />
-            <span>Sign Out</span>
+            {isLoading ? (
+              <>
+                <FaSpinner className="animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              'Login'
+            )}
           </button>
-        </div>
-      </nav>
 
-      {/* Main Content */}
-      <main className="lg:ml-72 p-4 lg:p-8">
-        <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8 mb-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">{greeting}, {userData?.name || 'Resident'}!</h1>
-              <p className="text-gray-500 mb-1">{currentDate}</p>
-              <p className="text-xl lg:text-2xl font-semibold text-gray-900">{currentTime}</p>
-              {userData && (
-                <p className="text-md mt-2 text-gray-600">
-                  Apartment {userData.apartment}, Floor {userData.floor}
-                </p>
-              )}
-            </div>
-            <div className="relative w-full lg:w-96 h-48 rounded-xl overflow-hidden">
-              <Image
-                src="/images/sevara_apartments.png"
-                alt="Building"
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <Link
-                key={feature.title}
-                href={feature.href}
-                className="block group"
-              >
-                <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-                  <div className={`${feature.color} p-6`}>
-                    <Icon className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
-                      {feature.title}
-                    </h3>
-                    <p className="mt-2 text-gray-600">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Quick Stats Section */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Maintenance Requests
-            </h3>
-            {isLoading ? (
-              <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
-            ) : (
-              <>
-                <p className="text-3xl font-bold text-blue-600">{stats.maintenanceRequests}</p>
-                <p className="text-sm text-gray-600 mt-1">Active requests</p>
-              </>
-            )}
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Lift Bookings
-            </h3>
-            {isLoading ? (
-              <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
-            ) : (
-              <>
-                <p className="text-3xl font-bold text-purple-600">{stats.liftBookings}</p>
-                <p className="text-sm text-gray-600 mt-1">Upcoming bookings</p>
-              </>
-            )}
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Notifications
-            </h3>
-            {isLoading ? (
-              <div className="animate-pulse h-8 bg-gray-200 rounded"></div>
-            ) : (
-              <>
-                <p className="text-3xl font-bold text-yellow-600">{stats.notifications}</p>
-                <p className="text-sm text-gray-600 mt-1">Unread messages</p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Maintenance Requests List */}
-        <div className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Your Maintenance Requests</h2>
-          {maintenanceRequests.length === 0 ? (
-            <div className="text-gray-500">No maintenance requests yet.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-xl shadow-sm">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Issue</th>
-                    <th className="px-4 py-2 text-left">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {maintenanceRequests.map((req) => (
-                    <tr key={req.id} className="border-t">
-                      <td className="px-4 py-2">{req.createdAt ? new Date(req.createdAt).toLocaleDateString() : '-'}</td>
-                      <td className="px-4 py-2">{req.issue || req.description || '-'}</td>
-                      <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          req.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                          req.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {req.status || 'pending'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-md text-sm">
+              {error}
             </div>
           )}
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <Link 
+              href="/auth/signup/resident" 
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Create Account
+            </Link>
+          </p>
         </div>
-      </main>
+      </div>
     </div>
   );
-}
-
+} 
