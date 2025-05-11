@@ -24,7 +24,8 @@ interface UserData {
 
 interface AuthContextType {
   user: User | null;
-  userData: UserData | null;
+  userRole: string | null;
+  userData: any | null;
   loading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -37,7 +38,8 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
@@ -49,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const userData = { id: docSnap.id, ...data } as UserData;
-        setUserData(userData);
+        setUserRole(data.role);
+        setUserData(data);
         setIsAdmin(data.role === 'admin');
       }
     } catch (error) {
@@ -65,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchUserData(user.uid);
       } else {
         setUserData(null);
+        setUserRole(null);
         setIsAdmin(false);
       }
       setLoading(false);
@@ -80,7 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setUserData({ id: userCredential.user.uid, ...userData } as UserData);
+        setUserRole(userData.role);
+        setUserData(userData);
         if (userData.role === 'admin') {
           router.push('/admin/dashboard');
         } else {
@@ -88,10 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setUserData(null);
+        setUserRole(null);
         throw new Error('User data not found');
       }
     } catch (error) {
       setUserData(null);
+      setUserRole(null);
       console.error('Error signing in:', error);
       throw error;
     }
@@ -146,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, userRole, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword }}>
       {!loading && children}
     </AuthContext.Provider>
   );
