@@ -12,18 +12,20 @@ export default function LoginResident() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { user, userData, signIn, loading } = useAuth();
+  const { user, userRole, signIn, loading } = useAuth();
 
   // Check if user is already logged in
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        router.push('/login');
-      } else if (userData?.role !== 'resident') {
-        router.push('/login');
+      if (user && userRole) {
+        if (userRole === 'resident') {
+          router.replace('/dashboard');
+        } else {
+          setError('Access denied. This account is not registered as a resident.');
+        }
       }
     }
-  }, [user, userData, loading, router]);
+  }, [user, userRole, loading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,13 +67,9 @@ export default function LoginResident() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <FaSpinner className="animate-spin text-4xl text-blue-600" />
-        <span className="ml-4 text-lg text-gray-700">Loading...</span>
+        <span className="ml-4 text-lg text-gray-700">Checking authentication...</span>
       </div>
     );
-  }
-
-  if (!user || !userData) {
-    return null;
   }
 
   return (
