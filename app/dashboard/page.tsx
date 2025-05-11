@@ -6,7 +6,7 @@ import Link from "next/link";
 import { FaUser, FaHome, FaSwimmingPool, FaFileAlt, FaArrowCircleUp, FaSignOutAlt, FaFileDownload, FaBuilding, FaEnvelope, FaTools, FaBars, FaTimes } from "react-icons/fa";
 import { useAuth } from "@/contexts/AuthContext";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/firebase";
+import { db } from "@/lib/firebase";
 import { User } from "@/models/User";
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
