@@ -12,14 +12,18 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { user, signIn, loading } = useAuth();
+  const { user, userData, signIn, loading } = useAuth();
 
   // Check if user is already logged in
   useEffect(() => {
-    if (!loading && user) {
-      router.replace('/dashboard');
+    if (!loading && user && userData) {
+      if (userData.role === 'admin') {
+        router.replace('/admin/dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
     }
-  }, [user, loading, router]);
+  }, [user, userData, loading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +37,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push('/dashboard');
+      // The AuthContext will handle the redirection based on role
     } catch (err: any) {
       console.error('Login error:', err);
       switch (err.code) {
