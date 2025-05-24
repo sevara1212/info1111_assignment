@@ -49,7 +49,7 @@ export default function Home() {
                 Login as Admin
               </Link>
               <Link 
-                href="/auth/signup/admin"
+                href="/admin/login"
                 className="block w-full text-center bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Create Admin Account
