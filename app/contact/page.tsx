@@ -29,7 +29,6 @@ const contacts = [
   },
   {
     position: "Building Manager",
-    name: "Building Management",
     shortName: "CM",
     email: "buildingmanager@sevara.apartments",
     phone: "04 0000 0003",

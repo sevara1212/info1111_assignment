@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaSpinner } from 'react-icons/fa';
 import Link from 'next/link';
@@ -12,20 +12,18 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, userData, signIn, loading: authLoading } = useAuth();
-  const selectedRole = searchParams.get('role');
 
   // Check if user is already logged in
   useEffect(() => {
     if (!authLoading && user && userData) {
-      if (userData.role === 'admin' && userData.adminRole === selectedRole) {
+      if (userData.role === 'admin') {
         window.location.href = '/admin/dashboard';
       } else {
-        setError('Access denied. This account is not registered for the selected admin role.');
+        setError('Access denied. This account is not registered as an admin.');
       }
     }
-  }, [user, userData, authLoading, selectedRole]);
+  }, [user, userData, authLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,23 +55,6 @@ export default function AdminLogin() {
     }
   };
 
-  if (!selectedRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No Role Selected</h1>
-          <p className="text-gray-600 mb-4">Please select an admin role first.</p>
-          <Link 
-            href="/admin/role-select"
-            className="text-blue-600 hover:text-blue-800"
-          >
-            Select Role
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -88,7 +69,7 @@ export default function AdminLogin() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {selectedRole} Login
+            Admin Login
           </h1>
           <p className="text-gray-600">
             Sign in to access the admin dashboard
@@ -159,10 +140,10 @@ export default function AdminLogin() {
             </Link>
           </p>
           <Link 
-            href="/admin/role-select"
+            href="/"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
-            Back to Role Selection
+            Back to Home
           </Link>
         </div>
       </div>

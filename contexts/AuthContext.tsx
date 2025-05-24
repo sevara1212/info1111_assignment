@@ -94,18 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
-<<<<<<< HEAD
         setUserRole(userData.role);
         setUserData(userData);
-        if (userData.role === 'admin') {
-          router.push('/admin/dashboard');
-        } else {
-          router.push('/dashboard');
-        }
-      } else {
-        setUserData(null);
-        setUserRole(null);
-=======
         
         if (userData.role === 'admin') {
           if (!userData.adminRole || !ADMIN_ROLES.includes(userData.adminRole)) {
@@ -118,7 +108,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw new Error('Invalid user role');
         }
       } else {
->>>>>>> af1f703 (s)
+        setUserData(null);
+        setUserRole(null);
         throw new Error('User data not found');
       }
     } catch (error) {
@@ -154,9 +145,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (adminRole) {
-        router.push('/admin/dashboard');
+        window.location.href = '/admin/dashboard';
       } else {
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }
     } catch (error) {
       console.error('Error signing up:', error);
@@ -167,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
-      router.push('/');
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -201,11 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-<<<<<<< HEAD
-    <AuthContext.Provider value={{ user, userRole, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword }}>
-=======
-    <AuthContext.Provider value={{ user, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword, checkAuth }}>
->>>>>>> af1f703 (s)
+    <AuthContext.Provider value={{ user, userRole, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword, checkAuth }}>
       {!loading && children}
     </AuthContext.Provider>
   );
