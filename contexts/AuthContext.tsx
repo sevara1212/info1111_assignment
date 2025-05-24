@@ -12,13 +12,23 @@ import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
+const ADMIN_ROLES = [
+  'Security',
+  'Strata Management',
+  'Building Management',
+  'Chairperson',
+  'Treasurer',
+  'Secretary'
+];
+
 interface UserData {
   id: string;
   name: string;
   email: string;
   apartment: number;
   floor: number;
-  role: 'admin' | 'resident';
+  role: string;
+  adminRole?: string;
   createdAt: Date;
 }
 
@@ -29,9 +39,10 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, apartment: string, floor: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string, apartment: string, floor: string, adminRole?: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
+  checkAuth: (requiredRole?: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -83,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
+<<<<<<< HEAD
         setUserRole(userData.role);
         setUserData(userData);
         if (userData.role === 'admin') {
@@ -93,6 +105,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setUserData(null);
         setUserRole(null);
+=======
+        
+        if (userData.role === 'admin') {
+          if (!userData.adminRole || !ADMIN_ROLES.includes(userData.adminRole)) {
+            throw new Error('Invalid admin role');
+          }
+          window.location.href = '/admin/dashboard';
+        } else if (userData.role === 'resident') {
+          window.location.href = '/dashboard';
+        } else {
+          throw new Error('Invalid user role');
+        }
+      } else {
+>>>>>>> af1f703 (s)
         throw new Error('User data not found');
       }
     } catch (error) {
@@ -103,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, apartment: string, floor: string) => {
+  const signUp = async (email: string, password: string, name: string, apartment: string, floor: string, adminRole?: string) => {
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -116,6 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name,
           apartment,
           floor,
+          role: adminRole ? 'admin' : 'resident',
+          adminRole
         }),
       });
 
@@ -125,7 +153,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(data.message || 'Error creating account');
       }
 
-      router.push('/dashboard');
+      if (adminRole) {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -151,8 +183,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const checkAuth = async (requiredRole?: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) return false;
+      
+      const userData = userDoc.data();
+      if (requiredRole && userData.role !== requiredRole) return false;
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking auth:', error);
+      return false;
+    }
+  };
+
   return (
+<<<<<<< HEAD
     <AuthContext.Provider value={{ user, userRole, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword }}>
+=======
+    <AuthContext.Provider value={{ user, userData, loading, isAdmin, signIn, signUp, signOut, resetPassword, checkAuth }}>
+>>>>>>> af1f703 (s)
       {!loading && children}
     </AuthContext.Provider>
   );

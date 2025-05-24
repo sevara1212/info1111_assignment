@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -159,6 +160,14 @@ export default function Dashboard() {
       color: 'bg-red-500'
     }
   ];
+=======
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import { FaSpinner } from 'react-icons/fa';
+
+export default function Dashboard() {
+  const { userData, loading } = useAuth();
+>>>>>>> af1f703 (s)
 
   const handleLogout = async () => {
     try {
@@ -173,6 +182,7 @@ export default function Dashboard() {
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
+<<<<<<< HEAD
   if (error) {
     return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
   }
@@ -250,10 +260,34 @@ export default function Dashboard() {
                 className="object-cover"
                 priority
               />
+=======
+
+  return (
+    <ProtectedRoute requiredRole="resident">
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+          
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Welcome, {userData?.name}</h2>
+            <div className="space-y-4">
+              <div>
+                <p className="text-gray-600">Email:</p>
+                <p className="font-medium">{userData?.email}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Apartment:</p>
+                <p className="font-medium">{userData?.apartment}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Floor:</p>
+                <p className="font-medium">{userData?.floor}</p>
+              </div>
+>>>>>>> af1f703 (s)
             </div>
           </div>
-        </div>
 
+<<<<<<< HEAD
         {/* Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => {
@@ -365,6 +399,12 @@ export default function Dashboard() {
         </div>
       </main>
     </div>
+=======
+          {/* Add resident dashboard content here */}
+        </div>
+      </div>
+    </ProtectedRoute>
+>>>>>>> af1f703 (s)
   );
 }
 

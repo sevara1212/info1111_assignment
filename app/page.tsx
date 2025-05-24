@@ -1,36 +1,18 @@
 "use client";
 
-import { FaUser } from 'react-icons/fa';
-import Image from 'next/image';
+import Link from 'next/link';
+import { FaUser, FaUserShield } from 'react-icons/fa';
 
-export default function HomePage() {
-  const handleLoginClick = () => {
-    // Force a full page navigation
-    window.location.replace('/auth/resident');
-  };
-
+export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl mb-8">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-4xl w-full space-y-8">
         <div className="text-center">
-          <div className="relative w-32 h-32 mx-auto mb-6">
-            <Image
-              src="/images/sevara_apartments.png"
-              alt="Building"
-              fill
-              className="object-contain"
-              priority
-              sizes="(max-width: 128px) 100vw, 128px"
-            />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Sevara Apartments
-          </h1>
-          <p className="text-gray-600 mb-8">
-            Please login to continue
-          </p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Strata Management System</h1>
+          <p className="text-lg text-gray-600">Welcome! Please select your role to continue.</p>
         </div>
 
+<<<<<<< HEAD
         <div className="space-y-4">
           <button
             onClick={handleLoginClick}
@@ -39,6 +21,52 @@ export default function HomePage() {
             <FaUser className="h-5 w-5" />
             Login as Resident
           </button>
+=======
+        <div className="grid md:grid-cols-2 gap-8 mt-8">
+          {/* Resident Section */}
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="flex items-center justify-center mb-6">
+              <FaUser className="text-4xl text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-semibold text-center mb-6">Resident Portal</h2>
+            <div className="space-y-4">
+              <Link 
+                href="/resident/login"
+                className="block w-full text-center bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Login as Resident
+              </Link>
+              <Link 
+                href="/auth/signup/resident"
+                className="block w-full text-center bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Create Resident Account
+              </Link>
+            </div>
+          </div>
+
+          {/* Admin Section */}
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="flex items-center justify-center mb-6">
+              <FaUserShield className="text-4xl text-green-600" />
+            </div>
+            <h2 className="text-2xl font-semibold text-center mb-6">Admin Portal</h2>
+            <div className="space-y-4">
+              <Link 
+                href="/admin/role-select"
+                className="block w-full text-center bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Login as Admin
+              </Link>
+              <Link 
+                href="/auth/signup/admin"
+                className="block w-full text-center bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Create Admin Account
+              </Link>
+            </div>
+          </div>
+>>>>>>> af1f703 (s)
         </div>
       </div>
     </div>
