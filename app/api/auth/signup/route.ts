@@ -1,25 +1,18 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name, apartment, floor, role, adminRole } = await request.json();
+    const { email, password, name, role } = await request.json();
 
     // Basic validation
-    if (!email || !password || !name || (role === 'resident' && (!apartment || !floor))) {
+    if (!email || !password || !name || !role) {
       return NextResponse.json({ success: false, message: 'Missing required fields.' }, { status: 400 });
     }
-    if (role === 'admin' && !adminRole) {
-      return NextResponse.json({ success: false, message: 'Missing admin role.' }, { status: 400 });
-    }
-
-    // Check if user already exists in Firestore
-    const userDocRef = doc(db, 'users', email);
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-      return NextResponse.json({ success: false, message: 'User already exists.' }, { status: 409 });
+    if (!['admin', 'resident'].includes(role)) {
+      return NextResponse.json({ success: false, message: 'Invalid role.' }, { status: 400 });
     }
 
     // Create user in Firebase Auth
@@ -31,19 +24,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: error.message }, { status: 400 });
     }
 
-    // Save user data in Firestore
-    const userData: any = {
+    // Save user data in Firestore (only allowed fields)
+    const userData = {
       name,
       email,
       role,
-      createdAt: new Date().toISOString(),
     };
-    if (role === 'resident') {
-      userData.apartment = apartment;
-      userData.floor = floor;
-    } else if (role === 'admin') {
-      userData.adminRole = adminRole;
-    }
     await setDoc(doc(db, 'users', userCredential.user.uid), userData);
 
     return NextResponse.json({ success: true });

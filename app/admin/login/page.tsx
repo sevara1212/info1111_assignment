@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaSpinner } from 'react-icons/fa';
 import Link from 'next/link';
@@ -10,7 +10,26 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { user, userData, signIn, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user && userData) {
+      if (userData.role === 'admin') {
+        window.location.href = '/admin/dashboard';
+      } else {
+        setError('Access denied. This account is not registered as an admin.');
+      }
+    }
+  }, [user, userData, authLoading]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <FaSpinner className="animate-spin text-4xl text-green-600" />
+        <span className="ml-4 text-lg text-gray-700">Loading...</span>
+      </div>
+    );
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +37,6 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await signIn(email, password);
-      window.location.href = '/admin/dashboard';
     } catch (err: any) {
       setError(err.message || 'Failed to login');
     } finally {
@@ -29,7 +47,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-gray-50">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
-        <h2 className="text-2xl font-bold mb-6 text-center">Admin Login bitch</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Admin Login</h2>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>

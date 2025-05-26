@@ -13,8 +13,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/resident', request.url));
   }
 
-  // Protect admin routes, but do NOT redirect /admin/login to itself
-  if (isAdmin && !isAdminLogin && (!authCookie || userRoleCookie?.value !== 'admin')) {
+  // Never protect /admin/login itself
+  if (isAdminLogin) {
+    return NextResponse.next();
+  }
+
+  // Protect admin routes (except /admin/login)
+  if (isAdmin && (!authCookie || userRoleCookie?.value !== 'admin')) {
     return NextResponse.redirect(new URL('/admin/login', request.url));
   }
 
