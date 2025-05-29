@@ -104,9 +104,9 @@ export default function ContactPage() {
     try {
       await addDoc(collection(db, 'contact_messages'), {
         userId: user.uid,
-        userName: user.displayName || '',
+        userName: userData?.name || user.displayName || '',
         userEmail: user.email,
-        recipient,
+        recipient: recipient,
         subject,
         message,
         status: 'unread',

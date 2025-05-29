@@ -86,8 +86,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const signIn = async (email: string, password: string, role: 'resident' | 'admin') => {
-    console.log('Attempting sign in for:', email);
+    console.log('signIn called with:', email, password, role);
     try {
+      console.log('Calling signInWithEmailAndPassword with:', auth, email, password);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Firebase auth successful:', userCredential.user.uid);
       

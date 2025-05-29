@@ -6,6 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FaSpinner, FaTools, FaSwimmingPool, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import Cookies from 'js-cookie';
 
 interface MaintenanceRequest {
   id: string;
@@ -65,9 +68,19 @@ export default function Dashboard() {
   }
 
   // Date and time
-  const now = new Date();
-  const dateString = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const timeString = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const [dateString, setDateString] = useState('');
+  const [timeString, setTimeString] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      setDateString(now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+      setTimeString(now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex bg-[#f7f8fa]">
@@ -98,8 +111,8 @@ export default function Dashboard() {
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="flex-1 min-w-0">
                 <h2 className="text-3xl font-bold mb-2 leading-tight text-gray-900">Good morning {userData.name}, Welcome to Sevara Apartments</h2>
-                <div className="text-gray-600 mb-1 text-lg">{dateString}</div>
-                <div className="text-3xl font-bold text-gray-400">{timeString}</div>
+                {dateString && <div className="text-gray-600 mb-1 text-lg">{dateString}</div>}
+                {timeString && <div className="text-3xl font-bold text-gray-400">{timeString}</div>}
                 <div className="mt-2 text-base text-gray-700">Apt: {userData.apartment || userData.unit || '-'} &nbsp; | &nbsp; Unit: {userData.unit || userData.apartment || '-'}</div>
               </div>
               <div className="mt-4 md:mt-0 md:ml-8 flex-shrink-0">

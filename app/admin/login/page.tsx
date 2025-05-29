@@ -53,7 +53,7 @@ export default function AdminLogin() {
     setError('');
     setLoading(true);
     try {
-      await signIn(email, password);
+      await signIn(email, password, 'admin');
     } catch (err: any) {
       setError(err.message || 'Failed to login');
     } finally {
