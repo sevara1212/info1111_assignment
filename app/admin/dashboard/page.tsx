@@ -5,19 +5,26 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaSpinner } from 'react-icons/fa';
 
+const ADMIN_ROLES = [
+  'Security',
+  'Strata Management',
+  'Building Management',
+  'Chairperson',
+  'Treasurer',
+  'Secretary'
+];
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { user, userData, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user || !userData) {
-        window.location.href = '/admin/login';
-      } else if (userData.role !== 'admin') {
-        window.location.href = '/admin/login';
-      }
+    console.log('user:', user);
+    console.log('userData:', userData);
+    if (!user && userData && userData.role === 'admin') {
+      window.location.href = '/admin/dashboard';
     }
-  }, [user, userData, loading]);
+  }, [user, userData]);
 
   if (loading) {
     return (

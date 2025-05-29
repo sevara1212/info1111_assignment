@@ -10,23 +10,40 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, userData, signIn, loading: authLoading } = useAuth();
+  const { user, userData, signIn, signOut, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && user && userData) {
-      if (userData.role === 'admin') {
-        window.location.href = '/admin/dashboard';
-      } else {
-        setError('Access denied. This account is not registered as an admin.');
-      }
+    if (!authLoading && user && userData && userData.role === 'admin') {
+      window.location.href = '/admin/dashboard';
     }
   }, [user, userData, authLoading]);
+
+  useEffect(() => {
+    if (!authLoading && user && userData && userData.role !== 'admin') {
+      setError('Access denied. This account is not registered as an admin.');
+    }
+  }, [user, userData, authLoading]);
+
+  useEffect(() => {
+    if (user) {
+      signOut();
+    }
+  }, [user, signOut]);
 
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <FaSpinner className="animate-spin text-4xl text-green-600" />
         <span className="ml-4 text-lg text-gray-700">Loading...</span>
+      </div>
+    );
+  }
+
+  if (user && userData && userData.role === 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <FaSpinner className="animate-spin text-4xl text-green-600" />
+        <span className="ml-4 text-lg text-gray-700">Redirecting...</span>
       </div>
     );
   }

@@ -4,21 +4,27 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const authCookie = request.cookies.get('auth');
   const userRoleCookie = request.cookies.get('userRole');
-  const isDashboard = request.nextUrl.pathname.startsWith('/dashboard');
-  const isAdmin = request.nextUrl.pathname.startsWith('/admin');
-  const isAdminLogin = request.nextUrl.pathname === '/admin/login';
 
-  // Protect dashboard routes
+  const path = request.nextUrl.pathname;
+
+  const isDashboard = path.startsWith('/dashboard');
+  const isAdminLogin = path === '/admin/login';
+  const isAdmin = path.startsWith('/admin');
+
+  console.log('auth:', request.cookies.get('auth')?.value);
+  console.log('userRole:', request.cookies.get('userRole')?.value);
+
+  // 🔒 Protect /dashboard/*
   if (isDashboard && !authCookie) {
     return NextResponse.redirect(new URL('/auth/resident', request.url));
   }
 
-  // Never protect /admin/login itself
+  // ✅ Allow /admin/login to be accessed by anyone
   if (isAdminLogin) {
     return NextResponse.next();
   }
 
-  // Protect admin routes (except /admin/login)
+  // 🔒 Protect /admin/* except /admin/login
   if (isAdmin && (!authCookie || userRoleCookie?.value !== 'admin')) {
     return NextResponse.redirect(new URL('/admin/login', request.url));
   }
@@ -28,4 +34,4 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: ['/dashboard/:path*', '/admin/:path*'],
-}; 
+};

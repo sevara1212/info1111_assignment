@@ -45,38 +45,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const role = userDoc.data().role;
             console.log('User role:', role);
             setUserRole(role);
-            
-            // Set cookies for middleware
-            Cookies.set('auth', 'true', { expires: 7 });
-            Cookies.set('userRole', role, { expires: 7 });
-            
-            // Redirect based on role
-            if (role === 'admin') {
-              console.log('Redirecting to admin dashboard');
-              router.push('/admin');
-            } else {
-              console.log('Redirecting to resident dashboard');
-              router.push('/dashboard');
-            }
+            // Do not auto-redirect here; let the login flow handle it
           } else {
             console.error('User document not found in Firestore');
             setUserRole(null);
-            Cookies.remove('auth');
-            Cookies.remove('userRole');
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
           setUserRole(null);
-          Cookies.remove('auth');
-          Cookies.remove('userRole');
         }
       } else {
         console.log('No user logged in');
         setUserRole(null);
-        Cookies.remove('auth');
-        Cookies.remove('userRole');
       }
-      
       setLoading(false);
     });
 
@@ -103,17 +84,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('User role:', role);
       setUserRole(role);
       
-      // Set cookies for middleware
-      Cookies.set('auth', 'true', { expires: 7 });
-      Cookies.set('userRole', role, { expires: 7 });
+      // Set HttpOnly cookies for middleware
+      await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auth: 'true', userRole: role }),
+      });
       
-      // Redirect based on role
+      // Force a full page reload to ensure cookies are sent
       if (role === 'admin') {
         console.log('Redirecting to admin dashboard');
-        router.push('/admin');
+        window.location.replace('app/admin/dashboard');
       } else {
         console.log('Redirecting to resident dashboard');
-        router.push('/dashboard');
+        window.location.replace('/dashboard');
       }
     } catch (error: any) {
       console.error('Login error:', error);

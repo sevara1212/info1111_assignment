@@ -8,14 +8,14 @@ export default function AmenitiesPage() {
     {
       name: "Swimming Pool",
       description: "Our luxurious swimming pool is perfect for both exercise and relaxation. Featuring temperature-controlled water and dedicated lap lanes.",
-      image: "public/images/poolindoor.png",
+      image: "/images/poolindoor.png",
       hours: "6:00 AM - 10:00 PM",
       features: ["Temperature Controlled", "Lap Lanes", "Pool Deck", "Shower Facilities"]
     },
     {
       name: "Gymnasium",
       description: "State-of-the-art gym equipped with cardio machines, free weights, and dedicated areas for stretching and functional training.",
-      image: "public/images/gym.png",
+      image: "/images/gym.png",
       hours: "24/7 Access",
       features: ["Modern Equipment", "Cardio Area", "Free Weights", "Personal Training"]
     }

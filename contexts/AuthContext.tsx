@@ -11,6 +11,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import Cookies from 'js-cookie';
 
 const ADMIN_ROLES = [
   'Security',
@@ -96,11 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = userDoc.data();
         setUserRole(userData.role);
         setUserData(userData);
+        // Set cookies for middleware
+        Cookies.set('auth', 'true');
+        Cookies.set('userRole', userData.role);
         
         if (userData.role === 'admin') {
-          if (!userData.adminRole || !ADMIN_ROLES.includes(userData.adminRole)) {
-            throw new Error('Invalid admin role');
-          }
+          // Redirect to admin dashboard after userData is set
           window.location.href = '/admin/dashboard';
         } else if (userData.role === 'resident') {
           window.location.href = '/dashboard';
@@ -115,6 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       setUserData(null);
       setUserRole(null);
+      Cookies.remove('auth');
+      Cookies.remove('userRole');
       console.error('Error signing in:', error);
       throw error;
     }
