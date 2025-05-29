@@ -1,41 +1,137 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaArrowCircleUp } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function BookLift() {
-  const [unit, setUnit] = useState('');
+  const { userData, user } = useAuth();
+  const [unit, setUnit] = useState(userData?.unit || userData?.apartment || '');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState('30');
   const [response, setResponse] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [pendingBookings, setPendingBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setUnit(userData?.unit || userData?.apartment || '');
+  }, [userData]);
+
+  useEffect(() => {
+    if (user) {
+      fetchBookings();
+      fetchPendingBookings();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchPendingBookings();
+  }, []);
+
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, 'lift_bookings'),
+        where('userEmail', '==', user?.email),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBookings(data);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPendingBookings = async () => {
+    try {
+      const q = query(
+        collection(db, 'lift_bookings'),
+        where('status', '==', 'pending'),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('Pending bookings:', data);
+      setPendingBookings(data);
+    } catch (error) {
+      console.error('Error fetching pending bookings:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setResponse({ message: 'You must be logged in to book the lift.', type: 'error' });
+      return;
+    }
     try {
-      const res = await fetch('/api/book-lift', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ unit, date, time, duration }),
+      await addDoc(collection(db, 'lift_bookings'), {
+        userId: user.uid,
+        userEmail: user.email,
+        unit,
+        date,
+        time,
+        duration,
+        status: 'pending',
+        createdAt: Timestamp.now()
       });
-
-      const data = await res.json();
-      
-      if (res.ok) {
-        setResponse({ message: 'Booking successful!', type: 'success' });
-        // Reset form
-        setUnit('');
-        setDate('');
-        setTime('');
-        setDuration('30');
-      } else {
-        setResponse({ message: data.error || 'Booking failed', type: 'error' });
-      }
+      setResponse({ message: 'Booking successful! Your request is being processed.', type: 'success' });
+      setDate('');
+      setTime('');
+      setDuration('30');
+      await fetchBookings();
     } catch (error) {
       setResponse({ message: 'An error occurred', type: 'error' });
     }
+  };
+
+  const generateCertificate = async () => {
+    if (!userData) return;
+
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([600, 400]);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+    const name = userData.name;
+    const unit = userData.unit || userData.apartment || '-';
+    const date = new Date().toLocaleDateString();
+    const certId = uuidv4();
+
+    page.drawText('Certificate of Residency', {
+      x: 150, y: 350, size: 24, font, color: rgb(0, 0, 0.7)
+    });
+
+    page.drawText(
+      `This is to certify that ${name} resides at unit ${unit} and is an approved resident of Sevara Apartments.`,
+      { x: 50, y: 300, size: 14, font, color: rgb(0, 0, 0) }
+    );
+
+    page.drawText(`Date of Issue: ${date}`, { x: 50, y: 250, size: 12, font });
+    page.drawText(`Certificate ID: ${certId}`, { x: 50, y: 230, size: 12, font });
+
+    page.drawText('Sevara Apartments Management', { x: 50, y: 180, size: 14, font, color: rgb(0, 0, 0.7) });
+
+    // Optionally, add a QR code or hash here
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Certificate_of_Residency_${name}_${unit}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -58,8 +154,8 @@ export default function BookLift() {
                 id="unit"
                 className="input"
                 value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="Enter your unit number"
+                disabled
+                readOnly
                 required
               />
             </div>
@@ -149,6 +245,63 @@ export default function BookLift() {
                 Please be punctual for your booking
               </li>
             </ul>
+          </div>
+
+          <div className="mt-8 bg-yellow-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-yellow-900 mb-4">
+              Pending Bookings
+            </h3>
+            {pendingBookings.length === 0 ? (
+              <div className="text-gray-500">No pending bookings.</div>
+            ) : (
+              <ul className="space-y-4">
+                {pendingBookings.map(booking => (
+                  <li key={booking.id} className="border rounded-lg p-4 bg-white">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <div className="font-semibold">{booking.date} at {booking.time} ({booking.duration} min)</div>
+                        <div className="text-sm text-gray-600">Unit: {booking.unit} | Apt: {booking.apartment || '-'}</div>
+                        <div className="text-sm text-gray-700">Requested by: {booking.userName || booking.userEmail}</div>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="mt-8 bg-gray-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Your Lift Bookings
+            </h3>
+            {loading ? (
+              <div>Loading...</div>
+            ) : bookings.length === 0 ? (
+              <div className="text-gray-500">No bookings found.</div>
+            ) : (
+              <ul className="space-y-4">
+                {bookings.map(booking => (
+                  <li key={booking.id} className="border rounded-lg p-4 bg-white">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <div className="font-semibold">{booking.date} at {booking.time} ({booking.duration} min)</div>
+                        <div className="text-sm text-gray-600">Unit: {booking.unit} | Apt: {booking.apartment}</div>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        booking.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        booking.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {booking.status === 'pending' ? 'Being processed' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-700">Requested by: {booking.userName}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>

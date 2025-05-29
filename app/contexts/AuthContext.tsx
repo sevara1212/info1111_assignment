@@ -6,20 +6,36 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  updateProfile as fbUpdateProfile,
+  updateEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 
+interface UserData {
+  name: string;
+  email: string;
+  role: 'resident' | 'admin';
+  apartment?: string;
+  unit?: string;
+  createdAt: string;
+}
+
 interface AuthContextType {
   user: User | null;
-  userRole: string | null;
+  userData: UserData | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string, apartment: string, floor: string) => Promise<void>;
-  logout: () => Promise<void>;
+  signIn: (email: string, password: string, role: 'resident' | 'admin') => Promise<void>;
+  signUp: (email: string, password: string, name: string, role: 'resident' | 'admin') => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (name: string, email: string, apartment?: string, unitNumber?: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -27,6 +43,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -42,20 +59,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Fetch user role from Firestore
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists()) {
-            const role = userDoc.data().role;
-            console.log('User role:', role);
-            setUserRole(role);
-            // Do not auto-redirect here; let the login flow handle it
+            const data = userDoc.data();
+            setUserData(data);
+            setUserRole(data.role);
           } else {
-            console.error('User document not found in Firestore');
+            setUserData(null);
             setUserRole(null);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+          setUserData(null);
           setUserRole(null);
         }
       } else {
         console.log('No user logged in');
+        setUserData(null);
         setUserRole(null);
       }
       setLoading(false);
@@ -67,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, role: 'resident' | 'admin') => {
     console.log('Attempting sign in for:', email);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -80,8 +98,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('User data not found');
       }
       
-      const role = userDoc.data().role;
-      console.log('User role:', role);
       setUserRole(role);
       
       // Set HttpOnly cookies for middleware
@@ -105,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, apartment: string, floor: string) => {
+  const signUp = async (email: string, password: string, name: string, role: 'resident' | 'admin') => {
     console.log('Attempting sign up for:', email);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -115,18 +131,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         email,
         name,
-        apartment,
-        floor,
-        role: 'resident', // Default role for new users
+        role,
         createdAt: new Date().toISOString()
       });
       console.log('Firestore document created');
       
-      setUserRole('resident');
+      setUserRole(role);
       
       // Set cookies for middleware
       Cookies.set('auth', 'true', { expires: 7 });
-      Cookies.set('userRole', 'resident', { expires: 7 });
+      Cookies.set('userRole', role, { expires: 7 });
       
       console.log('Redirecting to dashboard');
       router.push('/dashboard');
@@ -136,24 +150,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = async () => {
-    console.log('Attempting logout');
+  const signOut = async () => {
     try {
-      await signOut(auth);
+      await auth.signOut();
       setUser(null);
+      setUserData(null);
       setUserRole(null);
       Cookies.remove('auth');
       Cookies.remove('userRole');
-      console.log('Redirecting to home');
       router.push('/');
-    } catch (error: any) {
-      console.error('Logout error:', error);
-      throw new Error(error.message || 'Failed to log out');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
     }
   };
 
+  const updateProfile = async (name: string, email: string, apartment?: string, unitNumber?: string) => {
+    if (!user) throw new Error('No user');
+    const updateData: any = {};
+    if (name) {
+      await fbUpdateProfile(user, { displayName: name });
+      updateData.name = name;
+    }
+    if (email && email !== user.email) {
+      await updateEmail(user, email);
+      updateData.email = email;
+    }
+    if (apartment) {
+      updateData.apartment = apartment;
+    }
+    if (unitNumber) {
+      updateData.unit = unitNumber;
+    }
+    if (Object.keys(updateData).length > 0) {
+      await setDoc(doc(db, 'users', user.uid), updateData, { merge: true });
+      setUserData((prev: any) => ({ ...prev, ...updateData }));
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user || !user.email) throw new Error('No user');
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    await updatePassword(user, newPassword);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userRole, loading, signIn, signUp, logout }}>
+    <AuthContext.Provider value={{ user, userData, loading, signIn, signUp, signOut, updateProfile, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

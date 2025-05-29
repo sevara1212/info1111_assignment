@@ -3,14 +3,39 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { FaSpinner, FaTools, FaSwimmingPool, FaClipboardCheck, FaDownload, FaPhone, FaHome } from 'react-icons/fa';
+import { FaSpinner, FaTools, FaSwimmingPool, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
 
+interface MaintenanceRequest {
+  id: string;
+  title: string;
+  description: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  createdAt: Date;
+  userName?: string;
+  apartment?: string;
+  unit?: string;
+  userEmail?: string;
+  userId?: string;
+}
+
 export default function Dashboard() {
-  const router = useRouter();
-  const { user, userData, loading } = useAuth();
+  const router = useRouter(); 
+  const { user, userData, loading, signOut } = useAuth();
   const [showSettings, setShowSettings] = useState(false);
+
+  // Settings modal state
+  const [settingsName, setSettingsName] = useState(userData?.name || '');
+  const [settingsEmail, setSettingsEmail] = useState(user?.email || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [settingsError, setSettingsError] = useState('');
+  const [settingsSuccess, setSettingsSuccess] = useState('');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsApartment, setSettingsApartment] = useState(userData?.apartment || '');
+  const [settingsUnit, setSettingsUnit] = useState(userData?.unit || '');
 
   useEffect(() => {
     if (!loading) {
@@ -20,7 +45,11 @@ export default function Dashboard() {
         window.location.href = '/resident/login';
       }
     }
-  }, [user, userData, loading]);
+    setSettingsName(userData?.name || '');
+    setSettingsEmail(user?.email || '');
+    setSettingsApartment(userData?.apartment || '');
+    setSettingsUnit(userData?.unit || '');
+  }, [user, userData, loading, showSettings]);
 
   if (loading) {
     return (
@@ -52,59 +81,61 @@ export default function Dashboard() {
           <div className="text-sm text-gray-300">{userData.email}</div>
         </div>
         <nav className="flex flex-col gap-3 w-full px-4">
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#232c43] hover:bg-blue-600 transition font-medium text-base mb-1"><FaHome /> Dashboard</Link>
-          <Link href="/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#232c43] transition font-medium text-base mb-1"><FaTools /> Maintenance</Link>
-          <Link href="/amenities" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#232c43] transition font-medium text-base mb-1"><FaSwimmingPool /> Amenities</Link>
-          <Link href="/book-lift" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#232c43] transition font-medium text-base mb-1"><FaClipboardCheck /> Book Lift</Link>
-          <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#232c43] transition font-medium text-base mb-1"><FaDownload /> Downloads</Link>
-          <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#232c43] transition font-medium text-base"><FaPhone /> Contact</Link>
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base mb-1 text-[#16213e]"><FaHome style={{ color: '#16213e' }} /> Dashboard</Link>
+          <Link href="/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base mb-1 text-[#16213e]"><FaTools style={{ color: '#16213e' }} /> Maintenance</Link>
+          <Link href="/amenities" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base mb-1 text-[#16213e]"><FaSwimmingPool style={{ color: '#16213e' }} /> Amenities</Link>
+          <Link href="/book-lift" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base mb-1 text-[#16213e]"><FaClipboardCheck style={{ color: '#16213e' }} /> Book Lift</Link>
+          <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base mb-1 text-[#16213e]"><FaDownload style={{ color: '#16213e' }} /> Downloads</Link>
+          <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base text-[#16213e]"><FaPhone style={{ color: '#16213e' }} /> Contact</Link>
+          <button onClick={() => setShowSettings(true)} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base text-[#16213e]"><FaCog style={{ color: '#16213e' }} /> Settings</button>
+          <button onClick={async () => { await signOut(); }} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white hover:bg-blue-50 transition font-medium text-base text-[#16213e]"><FaSignOutAlt style={{ color: '#16213e' }} /> Sign Out</button>
         </nav>
-        <div className="mt-auto w-full px-4 flex flex-col gap-2">
-          <button onClick={() => setShowSettings(true)} className="w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-gray-800 hover:bg-blue-600 transition font-medium text-base mb-1 mt-8"><span>Settings</span></button>
-          <button onClick={async () => { await router.push('/'); location.reload(); }} className="w-full flex items-center gap-2 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition font-medium text-base"><span>Sign Out</span></button>
-        </div>
       </aside>
       {/* Main Content */}
-      <main className="flex-1 p-10">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-3xl font-bold mb-2 leading-tight text-gray-900">Good evening, Welcome to Sevara Apartments</h2>
-            <div className="text-gray-600 mb-1 text-lg">{dateString}</div>
-            <div className="text-3xl font-bold text-blue-800">{timeString}</div>
+      <main className="flex-1 p-10 bg-[#f3f4f6]">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-3xl font-bold mb-2 leading-tight text-gray-900">Good morning {userData.name}, Welcome to Sevara Apartments</h2>
+                <div className="text-gray-600 mb-1 text-lg">{dateString}</div>
+                <div className="text-3xl font-bold text-gray-400">{timeString}</div>
+                <div className="mt-2 text-base text-gray-700">Apt: {userData.apartment || userData.unit || '-'} &nbsp; | &nbsp; Unit: {userData.unit || userData.apartment || '-'}</div>
+              </div>
+              <div className="mt-4 md:mt-0 md:ml-8 flex-shrink-0">
+                <Image src="/images/sevara_apartments.jpg" alt="Building" width={340} height={200} className="rounded-lg object-cover shadow-lg" />
+              </div>
+            </div>
           </div>
-          <div className="mt-4 md:mt-0 md:ml-8 flex-shrink-0">
-            <Image src="/images/sevara_apartments.jpg" alt="Building" width={320} height={180} className="rounded-lg object-cover shadow-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-8">
+            <Link href="/maintenance" className="bg-white rounded-2xl shadow-lg p-16 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[260px] border border-blue-100">
+              <FaTools className="text-6xl mb-4" style={{ color: '#16213e' }} />
+              <div className="font-semibold text-2xl text-[#16213e]">Maintenance</div>
+            </Link>
+            <Link href="/amenities" className="bg-white rounded-2xl shadow-lg p-16 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[260px] border border-blue-100">
+              <FaSwimmingPool className="text-6xl mb-4" style={{ color: '#16213e' }} />
+              <div className="font-semibold text-2xl text-[#16213e]">Amenities</div>
+            </Link>
+            <Link href="/book-lift" className="bg-white rounded-2xl shadow-lg p-16 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[260px] border border-blue-100">
+              <FaClipboardCheck className="text-6xl mb-4" style={{ color: '#16213e' }} />
+              <div className="font-semibold text-2xl text-[#16213e]">Book Lift</div>
+            </Link>
+            <Link href="/downloads" className="bg-white rounded-2xl shadow-lg p-16 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[260px] border border-blue-100">
+              <FaDownload className="text-6xl mb-4" style={{ color: '#16213e' }} />
+              <div className="font-semibold text-2xl text-[#16213e]">Downloads</div>
+            </Link>
+            <Link href="/contact" className="bg-white rounded-2xl shadow-lg p-16 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[260px] border border-blue-100">
+              <FaPhone className="text-6xl mb-4" style={{ color: '#16213e' }} />
+              <div className="font-semibold text-2xl text-[#16213e]">Contact</div>
+            </Link>
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-8">
-          <Link href="/maintenance" className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[220px] border border-blue-100">
-            <FaTools className="text-5xl mb-4 text-blue-700" />
-            <div className="font-semibold text-xl">Maintenance</div>
-          </Link>
-          <Link href="/amenities" className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[220px] border border-blue-100">
-            <FaSwimmingPool className="text-5xl mb-4 text-blue-700" />
-            <div className="font-semibold text-xl">Amenities</div>
-          </Link>
-          <Link href="/book-lift" className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[220px] border border-blue-100">
-            <FaClipboardCheck className="text-5xl mb-4 text-blue-700" />
-            <div className="font-semibold text-xl">Book Lift</div>
-          </Link>
-          <Link href="/downloads" className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[220px] border border-blue-100">
-            <FaDownload className="text-5xl mb-4 text-blue-700" />
-            <div className="font-semibold text-xl">Downloads</div>
-          </Link>
-          <Link href="/contact" className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-blue-50 transition cursor-pointer min-h-[220px] border border-blue-100">
-            <FaPhone className="text-5xl mb-4 text-blue-700" />
-            <div className="font-semibold text-xl">Contact</div>
-          </Link>
         </div>
         {/* Settings Modal Placeholder */}
         {showSettings && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative">
               <button onClick={() => setShowSettings(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
-              <h3 className="text-xl font-bold mb-4">Settings (Coming Soon)</h3>
-              <p className="text-gray-600">Here you will be able to update your profile and change your password.</p>
+              <h3 className="text-xl font-bold mb-4">Settings</h3>
             </div>
           </div>
         )}

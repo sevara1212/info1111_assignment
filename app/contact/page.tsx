@@ -74,7 +74,7 @@ const ROLES = [
 ];
 
 export default function ContactPage() {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
   const router = useRouter();
   const [recipient, setRecipient] = useState(ROLES[0]);
   const [subject, setSubject] = useState('');
@@ -104,11 +104,15 @@ export default function ContactPage() {
     try {
       await addDoc(collection(db, 'contact_messages'), {
         userId: user.uid,
+        userName: user.displayName || '',
         userEmail: user.email,
+        recipient,
         subject,
         message,
         status: 'unread',
-        createdAt: Timestamp.now()
+        createdAt: Timestamp.now(),
+        unit: userData?.unit || userData?.apartment || '',
+        apartment: userData?.apartment || userData?.unit || ''
       });
 
       setSubject('');
@@ -135,60 +139,80 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#16213e] py-12 px-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="text-2xl font-bold mb-2 text-[#16213e]">Contact Information</h1>
-        <div className="mb-6 text-[#16213e]">
-          <div className="font-semibold">Available 24/7 for emergencies</div>
-          <div className="text-lg font-bold mt-1">Contact: +1 (555) 123-4567</div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white py-12 px-4">
+      <div className="w-full max-w-4xl">
+        <h1 className="text-2xl font-bold mb-6 text-[#16213e]">Contact Information</h1>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+          {contacts.map((contact, idx) => (
+            <div key={idx} className="flex flex-col items-center bg-[#f7f8fa] rounded-xl shadow p-6">
+              <img
+                src={contact.imageUrl}
+                alt={contact.name}
+                className="w-20 h-20 object-cover rounded-full border-4 border-blue-200 mb-3"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/placeholder.png';
+                }}
+              />
+              <div className="text-lg font-semibold text-gray-800">{contact.name || contact.position}</div>
+              <div className="text-sm text-gray-500 mb-1">{contact.position}</div>
+              <div className="text-xs text-gray-400">{contact.email}</div>
+              <div className="text-xs text-gray-400">{contact.phone}</div>
+            </div>
+          ))}
         </div>
-        <h2 className="text-xl font-bold mb-4 text-[#16213e]">Send a Message</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[#16213e] mb-1">Send to</label>
-            <select
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
-              value={recipient}
-              onChange={e => setRecipient(e.target.value)}
-              required
+        <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-xl p-8">
+          <div className="mb-6 text-[#16213e]">
+            <div className="font-semibold">Available 24/7 for emergencies</div>
+            <div className="text-lg font-bold mt-1">Contact: 04 0000 0000</div>
+          </div>
+          <h2 className="text-xl font-bold mb-4 text-[#16213e]">Send a Message</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[#16213e] mb-1">Send to</label>
+              <select
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                value={recipient}
+                onChange={e => setRecipient(e.target.value)}
+                required
+              >
+                {ROLES.map(role => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#16213e] mb-1">Subject</label>
+              <input
+                type="text"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                placeholder="What is this regarding?"
+                value={subject}
+                onChange={e => setSubject(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#16213e] mb-1">Message</label>
+              <textarea
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
+                placeholder="Please provide details about your inquiry"
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                rows={5}
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-700 text-white py-3 rounded-md font-semibold text-lg hover:bg-blue-800 transition-colors disabled:opacity-50"
+              disabled={isSubmitting}
             >
-              {ROLES.map(role => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#16213e] mb-1">Subject</label>
-            <input
-              type="text"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
-              placeholder="What is this regarding?"
-              value={subject}
-              onChange={e => setSubject(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#16213e] mb-1">Message</label>
-            <textarea
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700"
-              placeholder="Please provide details about your inquiry"
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              rows={5}
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-700 text-white py-3 rounded-md font-semibold text-lg hover:bg-blue-800 transition-colors disabled:opacity-50"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Sending...' : 'Send Message'}
-          </button>
-          {success && <div className="text-green-600 text-center font-medium">Message sent successfully!</div>}
-          {error && <div className="text-red-600 text-center font-medium">{error}</div>}
-        </form>
+              {isSubmitting ? 'Sending...' : 'Send Message'}
+            </button>
+            {success && <div className="text-green-600 text-center font-medium">Message sent successfully!</div>}
+            {error && <div className="text-red-600 text-center font-medium">{error}</div>}
+          </form>
+        </div>
       </div>
     </div>
   );

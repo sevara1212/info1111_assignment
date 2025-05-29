@@ -1,3 +1,6 @@
+import { db } from '@/lib/firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+
 export async function POST(request: Request) {
   if (request.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
@@ -5,31 +8,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { unit, date, time, duration } = body;
+    const { unit, apartment, userName, userEmail, date, time, duration } = body;
 
     // Validate required fields
-    if (!unit || !date || !time || !duration) {
+    if (!unit || !date || !time || !duration || !userName || !userEmail) {
       return new Response(
         JSON.stringify({ 
           success: false, 
           message: 'All fields are required' 
-        }),
-        { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    // Calculate floor from unit number
-    const floor = Math.floor(unit / 100);
-
-    // Validate floor range (1-60)
-    if (floor < 1 || floor > 60) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Invalid unit floor. Only floors 1-60 are allowed.' 
         }),
         { 
           status: 400,
@@ -54,17 +40,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // Store booking in Firestore
+    await addDoc(collection(db, 'lift_bookings'), {
+      unit,
+      apartment: apartment || '',
+      userName,
+      userEmail,
+      date,
+      time,
+      duration,
+      status: 'pending',
+      createdAt: Timestamp.now(),
+    });
+
     // Simulate successful booking
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Lift booked successfully!',
+        message: 'Lift booked successfully! Your request is being processed.',
         bookingDetails: {
           unit,
-          floor,
+          apartment,
+          userName,
+          userEmail,
           date,
           time,
-          duration
+          duration,
+          status: 'pending',
         }
       }),
       { 

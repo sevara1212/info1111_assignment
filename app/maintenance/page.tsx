@@ -13,10 +13,13 @@ interface MaintenanceRequest {
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: Date;
+  userName?: string;
+  apartment?: string;
+  unit?: string;
 }
 
 export default function MaintenancePage() {
-  const { user } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const router = useRouter();
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,33 +30,44 @@ export default function MaintenancePage() {
   const [description, setDescription] = useState('');
 
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       router.push('/auth/resident');
       return;
     }
-    fetchRequests();
-  }, [user, router]);
+    if (user) {
+      fetchRequests();
+    }
+  }, [user, authLoading, router]);
 
   const fetchRequests = async () => {
     setLoading(true);
     try {
       const q = query(
         collection(db, 'maintenance_requests'),
-        where('userId', '==', user?.uid),
         orderBy('createdAt', 'desc')
       );
-      
       const querySnapshot = await getDocs(q);
-      const requestsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt.toDate()
-      })) as MaintenanceRequest[];
-      
+      const requestsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          status: data.status,
+          createdAt: data.createdAt.toDate(),
+          userName: data.userName,
+          apartment: data.apartment,
+          unit: data.unit,
+          userEmail: data.userEmail,
+          userId: data.userId,
+        };
+      }) as MaintenanceRequest[];
+      console.log('Loaded requests:', requestsData);
       setRequests(requestsData);
+      setError('');
     } catch (error) {
       console.error('Error fetching requests:', error);
-      setError('Failed to load maintenance requests');
+      setError('Failed to load maintenance requests. ' + (error instanceof Error ? error.message : ''));
     } finally {
       setLoading(false);
     }
@@ -61,29 +75,57 @@ export default function MaintenancePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user || !userData) {
+      setError('Please log in to submit a maintenance request');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
 
     try {
-      await addDoc(collection(db, 'maintenance_requests'), {
-        userId: user?.uid,
+      const requestData = {
+        userId: user.uid,
         title,
         description,
         status: 'pending',
-        createdAt: Timestamp.now()
-      });
+        createdAt: Timestamp.now(),
+        unit: userData.unit || userData.apartment || '',
+        apartment: userData.apartment || userData.unit || '',
+        userName: userData.name || user.displayName || '',
+        userEmail: user.email || ''
+      };
+      console.log('Submitting maintenance request:', requestData);
+      await addDoc(collection(db, 'maintenance_requests'), requestData);
 
       setTitle('');
       setDescription('');
       setShowForm(false);
-      fetchRequests();
+      await fetchRequests();
     } catch (error) {
       console.error('Error submitting request:', error);
-      setError('Failed to submit maintenance request');
+      setError('Failed to submit maintenance request. ' + (error instanceof Error ? error.message : ''));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Group requests by status
+  const pendingRequests = requests.filter(r => r.status === 'pending');
+  const solvingRequests = requests.filter(r => r.status === 'in-progress');
+  const solvedRequests = requests.filter(r => r.status === 'completed');
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <FaSpinner className="animate-spin text-4xl text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -171,34 +213,72 @@ export default function MaintenancePage() {
           <div className="flex items-center justify-center py-8">
             <FaSpinner className="animate-spin text-blue-600 text-2xl" />
           </div>
-        ) : requests.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No maintenance requests found</p>
         ) : (
-          <div className="space-y-4">
-            {requests.map((request) => (
-              <div
-                key={request.id}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-medium">{request.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      Submitted on {request.createdAt.toLocaleDateString()}
-                    </p>
+          <>
+            {/* Pending */}
+            <h3 className="text-xl font-bold mb-4 text-yellow-700">Pending</h3>
+            {pendingRequests.length === 0 ? (
+              <p className="text-gray-500 text-center mb-6">No pending requests</p>
+            ) : (
+              <div className="space-y-4 mb-8">
+                {pendingRequests.map((request) => (
+                  <div key={request.id} className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-semibold text-lg text-yellow-900">{request.title}</h4>
+                        <p className="text-sm text-gray-500">Submitted on {request.createdAt.toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-700">By: {request.userName || '-'} | Apt: {request.apartment || '-'} | Unit: {request.unit || '-'}</p>
+                      </div>
+                      <span className="text-sm px-2 py-1 rounded-full bg-yellow-200 text-yellow-900">Pending</span>
+                    </div>
+                    <p className="text-gray-700 text-sm">{request.description}</p>
                   </div>
-                  <span className={`text-sm px-2 py-1 rounded-full ${
-                    request.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    request.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm">{request.description}</p>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+            {/* Solving */}
+            <h3 className="text-xl font-bold mb-4 text-blue-700">Solving</h3>
+            {solvingRequests.length === 0 ? (
+              <p className="text-gray-500 text-center mb-6">No requests in progress</p>
+            ) : (
+              <div className="space-y-4 mb-8">
+                {solvingRequests.map((request) => (
+                  <div key={request.id} className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-semibold text-lg text-blue-900">{request.title}</h4>
+                        <p className="text-sm text-gray-500">Submitted on {request.createdAt.toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-700">By: {request.userName || '-'} | Apt: {request.apartment || '-'} | Unit: {request.unit || '-'}</p>
+                      </div>
+                      <span className="text-sm px-2 py-1 rounded-full bg-blue-200 text-blue-900">Solving</span>
+                    </div>
+                    <p className="text-gray-700 text-sm">{request.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Solved */}
+            <h3 className="text-xl font-bold mb-4 text-green-700">Solved</h3>
+            {solvedRequests.length === 0 ? (
+              <p className="text-gray-500 text-center">No solved requests</p>
+            ) : (
+              <div className="space-y-4">
+                {solvedRequests.map((request) => (
+                  <div key={request.id} className="border border-green-200 rounded-lg p-4 bg-green-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-semibold text-lg text-green-900">{request.title}</h4>
+                        <p className="text-sm text-gray-500">Submitted on {request.createdAt.toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-700">By: {request.userName || '-'} | Apt: {request.apartment || '-'} | Unit: {request.unit || '-'}</p>
+                      </div>
+                      <span className="text-sm px-2 py-1 rounded-full bg-green-200 text-green-900">Solved</span>
+                    </div>
+                    <p className="text-gray-700 text-sm">{request.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
