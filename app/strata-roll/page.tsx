@@ -9,12 +9,13 @@ import { useRouter } from 'next/navigation';
 
 interface Owner {
   id: string;
-  name: string;
-  email: string;
-  apartment: number;
-  floor: number;
-  entitlements: number;
-  role: 'admin' | 'resident';
+  name?: string;
+  email?: string;
+  apartment?: number;
+  unit?: string;
+  floor?: number;
+  entitlements?: number;
+  role?: 'admin' | 'resident';
 }
 
 export default function StrataRollPage() {
@@ -35,7 +36,11 @@ export default function StrataRollPage() {
       return;
     }
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
-      setUnits(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const userData = snap.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      } as Owner));
+      setUnits(userData);
       setLoading(false);
     });
     return () => unsub();
