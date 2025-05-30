@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, updateDoc, doc, Timestamp } from 'firebase/firestore';
 
 interface LiftBooking {
   id: string;
@@ -31,6 +31,17 @@ export default function AdminLiftBookingsPage() {
     return () => unsub();
   }, []);
 
+  const handleStatusChange = async (bookingId: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, 'lift_bookings', bookingId), { 
+        status: newStatus,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">Lift Bookings</h1>
@@ -57,10 +68,7 @@ export default function AdminLiftBookingsPage() {
                   <select
                     className="px-2 py-1 border rounded mr-2"
                     value={b.status}
-                    onChange={async (e) => {
-                      const newStatus = e.target.value;
-                      await updateDoc(doc(db, 'lift_bookings', b.id), { status: newStatus });
-                    }}
+                    onChange={(e) => handleStatusChange(b.id, e.target.value)}
                   >
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>

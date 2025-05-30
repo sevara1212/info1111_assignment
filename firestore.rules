@@ -34,6 +34,41 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Lift bookings collection
+    match /lift_bookings/{bookingId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Documents collection
+    match /documents/{documentId} {
+      allow read: if isAuthenticated() && (
+        resource.data.visibility == 'public' ||
+        (resource.data.visibility == 'resident' && isAuthenticated()) ||
+        (resource.data.visibility == 'admin' && isAdmin())
+      );
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Contact messages collection
+    match /contact_messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        resource.data.from == request.auth.uid ||
+        resource.data.to == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
     // Levies collection
     match /levies/{levyId} {
       allow read: if isAuthenticated() && (

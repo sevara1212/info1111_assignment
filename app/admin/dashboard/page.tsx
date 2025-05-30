@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { FaSpinner, FaTools, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaUsers, FaChartBar } from 'react-icons/fa';
+import { FaSpinner, FaTools, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaUsers, FaChartBar, FaFileAlt } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
 import { collection, query, where, onSnapshot, getCountFromServer } from 'firebase/firestore';
@@ -109,6 +109,7 @@ export default function AdminDashboard() {
           <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaHome style={{ color: '#22d3ee' }} /> Dashboard</Link>
           <Link href="/admin/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaTools style={{ color: '#22d3ee' }} /> Maintenance</Link>
           <Link href="/admin/lift-bookings" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaClipboardCheck style={{ color: '#22d3ee' }} /> Lift Bookings</Link>
+          <Link href="/admin/documents" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaFileAlt style={{ color: '#22d3ee' }} /> Documents</Link>
           <Link href="/strata-roll" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaUsers style={{ color: '#22d3ee' }} /> Strata Roll</Link>
           <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaDownload style={{ color: '#22d3ee' }} /> Downloads</Link>
           <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base text-white border border-green-500"><FaPhone style={{ color: '#22d3ee' }} /> Contact</Link>

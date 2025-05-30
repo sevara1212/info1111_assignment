@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, updateDoc, doc, Timestamp } from 'firebase/firestore';
 
 interface MaintenanceRequest {
   id: string;
@@ -80,6 +80,17 @@ export default function AdminMaintenancePage() {
     }
   }, []);
 
+  const handleStatusChange = async (requestId: string, newStatus: string) => {
+    try {
+      await updateDoc(doc(db, 'maintenance_requests', requestId), { 
+        status: newStatus,
+        updatedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error('Error updating maintenance request status:', error);
+    }
+  };
+
   const openCount = requests.filter(r => r.status !== 'completed').length;
 
   return (
@@ -133,13 +144,10 @@ export default function AdminMaintenancePage() {
                   <select
                     className="px-2 py-1 border rounded mr-2"
                     value={req.status}
-                    onChange={async (e) => {
-                      const newStatus = e.target.value;
-                      await updateDoc(doc(db, 'maintenance_requests', req.id), { status: newStatus });
-                    }}
+                    onChange={(e) => handleStatusChange(req.id, e.target.value)}
                   >
                     <option value="pending">Pending</option>
-                    <option value="in process">In Process</option>
+                    <option value="in-progress">In Progress</option>
                     <option value="completed">Completed</option>
                   </select>
                 </td>

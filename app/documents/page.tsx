@@ -1,55 +1,257 @@
-import React from 'react';
+'use client';
 
-const documents = [
-  {
-    folder: "General Information",
-    files: [
-      { name: "Welcome Guide", path: "public/downloads/general-information/Welcome Guide.pdf" },
-      { name: "Emergency Procedures", path: "public/downloads/general-information/Emergency Procedures.pdf" },
-      { name: "Building Layout", path: "public/downloads/general-information/Building Layout.pdf" },
-      { name: "Resident Handbook", path: "public/downloads/general-information/Resident Handbook.docx" },
-    ],
-  },
-  {
-    folder: "Maintenance and Services",
-    files: [
-      { name: "Service Schedule", path: "public/downloads/maintenance-services/Service Schedule.pdf" },
-      { name: "Utility Information", path: "public/downloads/maintenance-services/Utility Information.pdf" },
-      { name: "Waste Management Guide", path: "public/downloads/maintenance-services/Waste Management Guide.pdf" },
-    ],
-  },
-  {
-    folder: "Financial Documents",
-    files: [
-      { name: "Monthly Levies", path: "public/downloads/financial-documents/Monthly Levies.pdf" },
-      { name: "Financial Statements", path: "public/downloads/financial-documents/Financial Statements.pdf" },
-      { name: "Insurance Policy", path: "public/downloads/financial-documents/Insurance Policy.pdf" },
-    ],
-  },
-];
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { FaSpinner, FaFile, FaImage, FaFilePdf, FaFileWord, FaDownload, FaEye, FaUsers, FaGlobe, FaSearch } from 'react-icons/fa';
 
-export default function DownloadsPage() {
-  return (
-    <div className="min-h-screen p-6 bg-black text-white">
-      <h1 className="text-4xl font-bold mb-6">Downloads</h1>
-      {documents.map((folder, index) => (
-        <div key={index} className="mb-8">
-          <h2 className="text-3xl font-semibold mb-4">{folder.folder}</h2>
-          <ul className="space-y-2">
-            {folder.files.map((file, idx) => (
-              <li key={idx}>
-                <a
-                  href={file.path}
-                  download
-                  className="text-blue-400 hover:underline"
-                >
-                  {file.name}
-                </a>
-              </li>
-            ))}
-          </ul>
+interface Document {
+  id: string;
+  title: string;
+  description: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  uploadedAt: any;
+  uploaderName: string;
+  visibility: 'resident' | 'admin' | 'public';
+}
+
+export default function DocumentsPage() {
+  const { user, userData } = useAuth();
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVisibility, setSelectedVisibility] = useState<'all' | 'resident' | 'public'>('all');
+
+  useEffect(() => {
+    if (user) {
+      fetchDocuments();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    filterDocuments();
+  }, [documents, searchTerm, selectedVisibility]);
+
+  const fetchDocuments = async () => {
+    try {
+      // Fetch documents that are visible to residents (resident and public)
+      const q = query(
+        collection(db, 'documents'),
+        where('visibility', 'in', ['resident', 'public']),
+        orderBy('uploadedAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const docs = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Document[];
+      setDocuments(docs);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      setError('Failed to load documents');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterDocuments = () => {
+    let filtered = documents;
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(doc =>
+        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by visibility
+    if (selectedVisibility !== 'all') {
+      filtered = filtered.filter(doc => doc.visibility === selectedVisibility);
+    }
+
+    setFilteredDocuments(filtered);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getFileIcon = (fileType: string) => {
+    if (fileType.includes('pdf')) return <FaFilePdf className="text-red-500 text-2xl" />;
+    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord className="text-blue-500 text-2xl" />;
+    if (fileType.includes('image')) return <FaImage className="text-green-500 text-2xl" />;
+    return <FaFile className="text-gray-500 text-2xl" />;
+  };
+
+  const getVisibilityIcon = (visibility: string) => {
+    switch (visibility) {
+      case 'resident': return <FaUsers className="text-blue-500" />;
+      case 'public': return <FaGlobe className="text-green-500" />;
+      default: return <FaUsers className="text-gray-500" />;
+    }
+  };
+
+  const getVisibilityLabel = (visibility: string) => {
+    switch (visibility) {
+      case 'resident': return 'Residents Only';
+      case 'public': return 'Public Access';
+      default: return 'Unknown';
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+          <p className="text-gray-600">Please log in to view documents.</p>
         </div>
-      ))}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading documents...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
+          <p className="text-gray-600 mt-2">Access important documents and resources</p>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search documents..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="md:w-48">
+              <select
+                value={selectedVisibility}
+                onChange={(e) => setSelectedVisibility(e.target.value as 'all' | 'resident' | 'public')}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Documents</option>
+                <option value="resident">Residents Only</option>
+                <option value="public">Public Access</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        {/* Documents Grid */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {filteredDocuments.length === 0 ? (
+            <div className="text-center py-12">
+              <FaFile className="text-6xl text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">
+                {searchTerm || selectedVisibility !== 'all' ? 'No documents found' : 'No documents available'}
+              </h3>
+              <p className="text-gray-600">
+                {searchTerm || selectedVisibility !== 'all' 
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Documents will appear here when they are uploaded by administrators'
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+              {filteredDocuments.map((document) => (
+                <div key={document.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="flex-shrink-0">
+                      {getFileIcon(document.fileType)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-medium text-gray-900 mb-1 truncate">
+                        {document.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                        {document.description || 'No description available'}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {getVisibilityIcon(document.visibility)}
+                        <span>{getVisibilityLabel(document.visibility)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <span>{formatFileSize(document.fileSize)}</span>
+                    <span>{document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <a
+                      href={document.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FaEye />
+                      View
+                    </a>
+                    <a
+                      href={document.fileUrl}
+                      download={document.fileName}
+                      className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FaDownload />
+                      Download
+                    </a>
+                  </div>
+
+                  <div className="mt-3 text-xs text-gray-400 text-center">
+                    Uploaded by {document.uploaderName}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {filteredDocuments.length > 0 && (
+          <div className="mt-6 text-center text-sm text-gray-500">
+            Showing {filteredDocuments.length} of {documents.length} document{documents.length !== 1 ? 's' : ''}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
