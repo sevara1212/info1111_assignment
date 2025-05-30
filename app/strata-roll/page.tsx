@@ -25,8 +25,16 @@ export default function StrataRollPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before showing dynamic content
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
+    if (!mounted) return;
+    
     if (!userData) {
       router.push('/auth/admin');
       return;
@@ -44,7 +52,7 @@ export default function StrataRollPage() {
       setLoading(false);
     });
     return () => unsub();
-  }, [userData, isAdmin, router]);
+  }, [userData, isAdmin, router, mounted]);
 
   const filtered = units.filter(u =>
     u.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,6 +60,16 @@ export default function StrataRollPage() {
     (u.apartment + '').includes(search) ||
     (u.unit + '').includes(search)
   );
+
+  if (!mounted) {
+    return (
+      <div className="max-w-5xl mx-auto p-8">
+        <div className="flex items-center justify-center py-8">
+          <FaSpinner className="animate-spin text-blue-600 text-2xl" />
+        </div>
+      </div>
+    );
+  }
 
   if (!isAdmin) {
     return (
