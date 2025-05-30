@@ -29,10 +29,10 @@ export default function DocumentsPage() {
   const [selectedVisibility, setSelectedVisibility] = useState<'all' | 'resident' | 'public'>('all');
 
   useEffect(() => {
-    if (user) {
+    if (user && userData) {
       fetchDocuments();
     }
-  }, [user]);
+  }, [user, userData]);
 
   useEffect(() => {
     filterDocuments();
@@ -40,21 +40,62 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     try {
-      // Fetch documents that are visible to residents (resident and public)
-      const q = query(
-        collection(db, 'documents'),
-        where('visibility', 'in', ['resident', 'public']),
-        orderBy('uploadedAt', 'desc')
-      );
+      setError('');
+      console.log('Fetching documents for user:', userData);
+      
+      // First try to get all documents and filter client-side to avoid indexing issues
+      let q = query(collection(db, 'documents'));
+      
+      // Try with ordering if possible, but fall back to unordered if index doesn't exist
+      try {
+        q = query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'));
+      } catch (indexError) {
+        console.log('Using unordered query due to missing index');
+        q = query(collection(db, 'documents'));
+      }
+      
       const querySnapshot = await getDocs(q);
-      const docs = querySnapshot.docs.map(doc => ({
+      const allDocs = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Document[];
-      setDocuments(docs);
-    } catch (error) {
+      
+      console.log('All documents fetched:', allDocs);
+      
+      // Filter documents based on user role and visibility
+      let visibleDocs = allDocs;
+      
+      if (userData?.role !== 'admin') {
+        // For non-admin users, only show resident and public documents
+        visibleDocs = allDocs.filter(doc => 
+          doc.visibility === 'resident' || doc.visibility === 'public'
+        );
+      }
+      
+      // Sort by upload date if available
+      visibleDocs.sort((a, b) => {
+        const dateA = a.uploadedAt?.toDate?.() || new Date(0);
+        const dateB = b.uploadedAt?.toDate?.() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      console.log('Visible documents:', visibleDocs);
+      setDocuments(visibleDocs);
+    } catch (error: any) {
       console.error('Error fetching documents:', error);
-      setError('Failed to load documents');
+      
+      // Provide more specific error messages
+      if (error.code === 'permission-denied') {
+        setError('You do not have permission to view documents. Please contact an administrator.');
+      } else if (error.code === 'unavailable') {
+        setError('Service is temporarily unavailable. Please try again later.');
+      } else if (error.code === 'failed-precondition') {
+        setError('Database index is being built. Please try again in a few minutes.');
+      } else if (error.code === 'unauthenticated') {
+        setError('Please log in to view documents.');
+      } else {
+        setError(`Failed to load documents: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -167,17 +208,35 @@ export default function DocumentsPage() {
               </select>
             </div>
           </div>
+          
+          {/* Retry button if there's an error */}
+          {error && (
+            <div className="mt-4">
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  fetchDocuments();
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Retry Loading
+              </button>
+            </div>
+          )}
         </div>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Error:</span>
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
         {/* Documents Grid */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {filteredDocuments.length === 0 ? (
+          {filteredDocuments.length === 0 && !error ? (
             <div className="text-center py-12">
               <FaFile className="text-6xl text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">
@@ -190,7 +249,7 @@ export default function DocumentsPage() {
                 }
               </p>
             </div>
-          ) : (
+          ) : filteredDocuments.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
               {filteredDocuments.map((document) => (
                 <div key={document.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
@@ -243,7 +302,7 @@ export default function DocumentsPage() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
         {filteredDocuments.length > 0 && (

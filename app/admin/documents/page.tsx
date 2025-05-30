@@ -47,16 +47,45 @@ export default function AdminDocumentsPage() {
 
   const fetchDocuments = async () => {
     try {
-      const q = query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'));
+      setError('');
+      console.log('Admin fetching documents...');
+      
+      // Try with ordering first, fall back to unordered if index doesn't exist
+      let q;
+      try {
+        q = query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'));
+      } catch (indexError) {
+        console.log('Using unordered query due to missing index');
+        q = query(collection(db, 'documents'));
+      }
+      
       const querySnapshot = await getDocs(q);
       const docs = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Document[];
+      
+      // Sort manually if we couldn't use orderBy
+      docs.sort((a, b) => {
+        const dateA = a.uploadedAt?.toDate?.() || new Date(0);
+        const dateB = b.uploadedAt?.toDate?.() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
+      
+      console.log('Admin fetched documents:', docs);
       setDocuments(docs);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching documents:', error);
-      setError('Failed to load documents');
+      
+      if (error.code === 'permission-denied') {
+        setError('Permission denied. Please check your admin privileges.');
+      } else if (error.code === 'unavailable') {
+        setError('Service is temporarily unavailable. Please try again later.');
+      } else if (error.code === 'failed-precondition') {
+        setError('Database index is being built. Please try again in a few minutes.');
+      } else {
+        setError(`Failed to load documents: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -78,9 +107,19 @@ export default function AdminDocumentsPage() {
 
       // Update local state
       setDocuments(prev => prev.filter(doc => doc.id !== document.id));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting document:', error);
-      setError('Failed to delete document');
+      if (error.code === 'object-not-found') {
+        // File doesn't exist in storage, just delete from Firestore
+        try {
+          await deleteDoc(doc(db, 'documents', document.id));
+          setDocuments(prev => prev.filter(doc => doc.id !== document.id));
+        } catch (firestoreError) {
+          setError('Failed to delete document from database');
+        }
+      } else {
+        setError('Failed to delete document');
+      }
     } finally {
       setDeleting(null);
     }
@@ -149,12 +188,23 @@ export default function AdminDocumentsPage() {
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
+            <div className="flex items-center justify-between">
+              <span>{error}</span>
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  fetchDocuments();
+                }}
+                className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         )}
 
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {documents.length === 0 ? (
+          {documents.length === 0 && !error ? (
             <div className="text-center py-12">
               <FaFile className="text-6xl text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-2">No documents uploaded</h3>
@@ -167,7 +217,7 @@ export default function AdminDocumentsPage() {
                 Upload Document
               </Link>
             </div>
-          ) : (
+          ) : documents.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
@@ -256,7 +306,7 @@ export default function AdminDocumentsPage() {
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
         </div>
 
         {documents.length > 0 && (

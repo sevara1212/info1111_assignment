@@ -1,21 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
+    
+    // 🔐 Common Helpers
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Users collection
+    // 👤 Users
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
@@ -23,29 +24,27 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Maintenance requests collection
+    // 🧹 Maintenance Requests
     match /maintenance_requests/{requestId} {
       allow read: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid || 
-        isAdmin()
+        resource.data.userId == request.auth.uid || isAdmin()
       );
       allow create: if isAuthenticated();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Lift bookings collection
+    // 🚚 Lift Bookings
     match /lift_bookings/{bookingId} {
       allow read: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid || 
-        isAdmin()
+        resource.data.userId == request.auth.uid || isAdmin()
       );
       allow create: if isAuthenticated();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Documents collection
+    // 📄 Documents (Fixed - use resource.data instead of get())
     match /documents/{documentId} {
       allow read: if isAuthenticated() && (
         resource.data.visibility == 'public' ||
@@ -57,38 +56,51 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Contact messages collection
+    // 💬 Contact Messages (Fixed - allow users to update their own messages)
     match /contact_messages/{messageId} {
       allow read: if isAuthenticated() && (
         resource.data.from == request.auth.uid ||
         resource.data.to == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email ||
+        resource.data.userEmail == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email ||
         isAdmin()
       );
       allow create: if isAuthenticated();
-      allow update: if isAdmin();
+      allow update: if isAuthenticated() && (
+        resource.data.to == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email ||
+        resource.data.userEmail == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email ||
+        isAdmin()
+      );
       allow delete: if isAdmin();
     }
 
-    // Levies collection
+    // 💸 Levies
     match /levies/{levyId} {
       allow read: if isAuthenticated() && (
-        resource.data.apartment == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.apartment ||
-        isAdmin()
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.apartment ==
+        resource.data.apartment || isAdmin()
       );
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
-    // Amenity payments collection
+    // 🏋️ Amenity Payments
     match /amenity_payments/{paymentId} {
       allow read: if isAuthenticated() && (
-        resource.data.userId == request.auth.uid ||
-        isAdmin()
+        resource.data.userId == request.auth.uid || isAdmin()
       );
       allow create: if isAuthenticated();
       allow update: if isAdmin();
       allow delete: if isAdmin();
+    }
+  }
+}
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow authenticated users to read and write files
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
     }
   }
 } 

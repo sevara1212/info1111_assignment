@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
@@ -29,53 +29,34 @@ export default function AdminMessagesPage() {
 
   useEffect(() => {
     if (!userData) return;
-    console.log('Admin userData:', userData);
-    console.log('Admin role:', userData.role);
-    console.log('Admin email:', userData.email);
     
-    const q = query(collection(db, 'contact_messages'));
+    // Query for messages sent to admin or admin role
+    const q = query(
+      collection(db, 'contact_messages'),
+      orderBy('sentAt', 'desc')
+    );
+    
     const unsub = onSnapshot(q, (snap) => {
-      console.log('All messages from Firestore:', snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const allMessages = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
       
-      setMessages(
-        snap.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as Message))
-          .filter(m => {
-            console.log('Checking message:', m);
-            console.log('Message to:', m.to, 'Message recipient:', m.recipient);
-            
-            // Show messages sent to admin's email
-            if (m.to === userData.email) {
-              console.log('Match: message to admin email');
-              return true;
-            }
-            
-            // Show messages sent to admin's role (exact match, case-insensitive)
-            if (userData.role) {
-              const roleLower = userData.role.toLowerCase();
-              const toLower = m.to?.toLowerCase() || '';
-              const recipientLower = m.recipient?.toLowerCase() || '';
-              
-              console.log('Comparing:', roleLower, 'with to:', toLower, 'and recipient:', recipientLower);
-              
-              if (toLower === roleLower || recipientLower === roleLower) {
-                console.log('Match: message for admin role');
-                return true;
-              }
-            }
-            
-            // Fallback: if email contains 'security' and message recipient is 'Security'
-            if (userData.email.includes('security') && m.recipient?.toLowerCase() === 'security') {
-              console.log('Match: security email fallback');
-              return true;
-            }
-            
-            console.log('No match for this message');
-            return false;
-          })
-      );
+      // Filter messages for admin
+      const adminMessages = allMessages.filter(m => {
+        // Messages sent to admin's email
+        if (m.to === userData.email) return true;
+        
+        // Messages sent to admin role
+        if (userData.role && m.to?.toLowerCase() === userData.role.toLowerCase()) return true;
+        
+        // Messages sent to 'admin' generally
+        if (m.to?.toLowerCase() === 'admin') return true;
+        
+        return false;
+      });
+      
+      setMessages(adminMessages);
       setLoading(false);
     });
+    
     return () => unsub();
   }, [userData]);
 
@@ -196,7 +177,9 @@ export default function AdminMessagesPage() {
       ) : (
         <div className="space-y-4">
           {messages.map((m) => (
-            <div key={m.id} className="bg-[#23272f] rounded-xl shadow-lg border border-green-700 overflow-hidden">
+            <div key={m.id} className={`bg-[#23272f] rounded-xl shadow-lg border overflow-hidden ${
+              m.read ? 'border-gray-600' : 'border-green-700 bg-[#1a2e1a]'
+            }`}>
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
@@ -210,6 +193,11 @@ export default function AdminMessagesPage() {
                         </div>
                         <div className="text-sm text-gray-400">{m.userEmail || m.fromEmail}</div>
                       </div>
+                      {!m.read && (
+                        <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full">
+                          NEW
+                        </span>
+                      )}
                     </div>
                     <div className="bg-[#1a1d23] rounded-lg p-4 mb-3">
                       <div className="text-white leading-relaxed">{m.message}</div>
@@ -228,12 +216,14 @@ export default function AdminMessagesPage() {
                     >
                       Reply
                     </button>
-                    <button 
-                      onClick={() => handleMarkAsRead(m.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                    >
-                      Mark as Read
-                    </button>
+                    {!m.read && (
+                      <button 
+                        onClick={() => handleMarkAsRead(m.id)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        Mark as Read
+                      </button>
+                    )}
                   </div>
                 </div>
                 

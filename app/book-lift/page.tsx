@@ -415,22 +415,58 @@ export default function BookLift() {
           </div>
 
           <div className="mt-8 bg-yellow-50 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-yellow-900 mb-4">
-              Pending Bookings
+            <h3 className="text-lg font-semibold text-yellow-900 mb-4 flex items-center gap-2">
+              <FaCalendarAlt className="text-yellow-600" />
+              Your Pending Bookings
             </h3>
-            {pendingBookings.length === 0 ? (
+            {bookings.filter(b => b.status === 'pending').length === 0 ? (
               <div className="text-gray-500">No pending bookings.</div>
             ) : (
               <ul className="space-y-4">
-                {pendingBookings.map(booking => (
-                  <li key={booking.id} className="border rounded-lg p-4 bg-white">
+                {bookings.filter(b => b.status === 'pending').map(booking => (
+                  <li key={booking.id} className="border rounded-lg p-4 bg-white shadow-sm">
                     <div className="flex justify-between items-center mb-2">
                       <div>
-                        <div className="font-semibold">{booking.date} at {booking.time} ({booking.duration} min)</div>
+                        <div className="font-semibold text-gray-900">{booking.date} at {booking.time}</div>
+                        <div className="text-sm text-gray-600">Duration: {booking.duration} minutes</div>
                         <div className="text-sm text-gray-600">Unit: {booking.unit} | Apt: {booking.apartment || '-'}</div>
-                        <div className="text-sm text-gray-700">Requested by: {booking.userName || booking.userEmail}</div>
                       </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                      <span className="text-xs px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                        Pending Approval
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      Submitted: {booking.createdAt?.toDate?.()?.toLocaleDateString()}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="mt-8 bg-green-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center gap-2">
+              <FaArrowCircleUp className="text-green-600" />
+              Your Approved Bookings
+            </h3>
+            {bookings.filter(b => b.status === 'approved').length === 0 ? (
+              <div className="text-gray-500">No approved bookings.</div>
+            ) : (
+              <ul className="space-y-4">
+                {bookings.filter(b => b.status === 'approved').map(booking => (
+                  <li key={booking.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <div className="font-semibold text-gray-900">{booking.date} at {booking.time}</div>
+                        <div className="text-sm text-gray-600">Duration: {booking.duration} minutes</div>
+                        <div className="text-sm text-gray-600">Unit: {booking.unit} | Apt: {booking.apartment || '-'}</div>
+                      </div>
+                      <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-800 font-medium">
+                        Approved
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      Approved: {booking.updatedAt?.toDate?.()?.toLocaleDateString() || booking.createdAt?.toDate?.()?.toLocaleDateString()}
                     </div>
                   </li>
                 ))}
@@ -440,7 +476,7 @@ export default function BookLift() {
 
           <div className="mt-8 bg-gray-50 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Your Lift Bookings
+              All Your Lift Bookings
             </h3>
             {loading ? (
               <div>Loading...</div>
