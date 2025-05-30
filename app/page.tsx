@@ -8,7 +8,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Strata Management System</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Sevara Apartments</h1>
           <p className="text-lg text-gray-600">Welcome! Please select your role to continue.</p>
         </div>
 

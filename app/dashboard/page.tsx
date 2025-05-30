@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { FaSpinner, FaTools, FaSwimmingPool, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { FaSpinner, FaTools, FaSwimmingPool, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaBell } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Cookies from 'js-cookie';
 
@@ -21,6 +21,15 @@ interface MaintenanceRequest {
   unit?: string;
   userEmail?: string;
   userId?: string;
+}
+
+interface Notification {
+  id: string;
+  fromName?: string;
+  fromEmail?: string;
+  message: string;
+  sentAt?: any;
+  isAdminReply?: boolean;
 }
 
 export default function Dashboard() {
@@ -39,6 +48,32 @@ export default function Dashboard() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsApartment, setSettingsApartment] = useState(userData?.apartment || '');
   const [settingsUnit, setSettingsUnit] = useState(userData?.unit || '');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  // Date and time state
+  const [dateString, setDateString] = useState('');
+  const [timeString, setTimeString] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before showing date/time
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Date and time update effect
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const update = () => {
+      const now = new Date();
+      setDateString(now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
+      setTimeString(now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [mounted]);
 
   useEffect(() => {
     if (!loading) {
@@ -54,6 +89,30 @@ export default function Dashboard() {
     setSettingsUnit(userData?.unit || '');
   }, [user, userData, loading, showSettings]);
 
+  // Listen for new messages/notifications
+  useEffect(() => {
+    if (!userData?.email) return;
+    const q = query(
+      collection(db, 'contact_messages'), 
+      where('to', '==', userData.email),
+      where('read', '==', false)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setNotifications(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification)));
+    });
+    return () => unsub();
+  }, [userData]);
+
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      await updateDoc(doc(db, 'contact_messages', messageId), {
+        read: true
+      });
+    } catch (err) {
+      console.error('Error marking message as read:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -66,21 +125,6 @@ export default function Dashboard() {
   if (!user || !userData) {
     return null;
   }
-
-  // Date and time
-  const [dateString, setDateString] = useState('');
-  const [timeString, setTimeString] = useState('');
-
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      setDateString(now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
-      setTimeString(now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }));
-    };
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <div className="min-h-screen flex bg-[#f7f8fa]">
@@ -111,12 +155,66 @@ export default function Dashboard() {
             <div className="flex flex-col md:flex-row justify-between items-center">
               <div className="flex-1 min-w-0">
                 <h2 className="text-3xl font-bold mb-2 leading-tight text-gray-900">Good morning {userData.name}, Welcome to Sevara Apartments</h2>
-                {dateString && <div className="text-gray-600 mb-1 text-lg">{dateString}</div>}
-                {timeString && <div className="text-3xl font-bold text-gray-400">{timeString}</div>}
+                {mounted && dateString && <div className="text-gray-600 mb-1 text-lg">{dateString}</div>}
+                {mounted && timeString && <div className="text-3xl font-bold text-gray-400">{timeString}</div>}
                 <div className="mt-2 text-base text-gray-700">Apt: {userData.apartment || userData.unit || '-'} &nbsp; | &nbsp; Unit: {userData.unit || userData.apartment || '-'}</div>
               </div>
-              <div className="mt-4 md:mt-0 md:ml-8 flex-shrink-0">
-                <Image src="/images/sevara_apartments.jpg" alt="Building" width={340} height={200} className="rounded-lg object-cover shadow-lg" />
+              <div className="mt-4 md:mt-0 md:ml-8 flex items-center gap-4">
+                {/* Notification Bell */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="p-3 bg-blue-100 rounded-full hover:bg-blue-200 transition relative"
+                  >
+                    <FaBell className="text-blue-600 text-xl" />
+                    {notifications.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        {notifications.length}
+                      </span>
+                    )}
+                  </button>
+                  
+                  {/* Notification Popup */}
+                  {showNotifications && (
+                    <div className="fixed top-4 right-4 w-80 bg-white rounded-lg shadow-xl border z-50 max-h-96 overflow-y-auto">
+                      <div className="p-4 border-b">
+                        <h3 className="font-semibold text-lg">Notifications ({notifications.length})</h3>
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div className="p-4 text-gray-500 text-center">No new notifications</div>
+                      ) : (
+                        <div className="divide-y">
+                          {notifications.map((notif) => (
+                            <div key={notif.id} className="p-4 hover:bg-gray-50">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm">
+                                    {notif.isAdminReply ? 'Admin Reply' : `From: ${notif.fromName || notif.fromEmail}`}
+                                  </div>
+                                  <div className="text-gray-600 text-sm mt-1">{notif.message}</div>
+                                  {notif.sentAt && (
+                                    <div className="text-xs text-gray-400 mt-2">
+                                      {new Date(notif.sentAt.seconds * 1000).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => handleMarkAsRead(notif.id)}
+                                  className="ml-3 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                                >
+                                  Mark Read
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-shrink-0">
+                  <Image src="/images/sevara_apartments.jpg" alt="Building" width={340} height={200} className="rounded-lg object-cover shadow-lg" />
+                </div>
               </div>
             </div>
           </div>

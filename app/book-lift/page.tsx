@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { FaArrowCircleUp } from 'react-icons/fa';
+import { FaArrowCircleUp, FaCalendarAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, addDoc, Timestamp, onSnapshot } from 'firebase/firestore';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,7 +17,15 @@ export default function BookLift() {
   const [response, setResponse] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [bookings, setBookings] = useState<any[]>([]);
   const [pendingBookings, setPendingBookings] = useState<any[]>([]);
+  const [allBookings, setAllBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setUnit(userData?.unit || userData?.apartment || '');
@@ -27,11 +35,13 @@ export default function BookLift() {
     if (user) {
       fetchBookings();
       fetchPendingBookings();
+      fetchAllBookings();
     }
   }, [user]);
 
   useEffect(() => {
     fetchPendingBookings();
+    fetchAllBookings();
   }, []);
 
   const fetchBookings = async () => {
@@ -66,6 +76,96 @@ export default function BookLift() {
     } catch (error) {
       console.error('Error fetching pending bookings:', error);
     }
+  };
+
+  const fetchAllBookings = async () => {
+    try {
+      const q = query(
+        collection(db, 'lift_bookings'),
+        orderBy('createdAt', 'desc')
+      );
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAllBookings(data);
+    } catch (error) {
+      console.error('Error fetching all bookings:', error);
+    }
+  };
+
+  // Calendar helper functions
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const getBookingsForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    return allBookings.filter(booking => booking.date === dateString);
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+    const days = [];
+    const today = new Date();
+    
+    // Empty cells for days before the first day of the month
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-24 border border-gray-200"></div>);
+    }
+    
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dayBookings = getBookingsForDate(date);
+      const isToday = date.toDateString() === today.toDateString();
+      const isPast = date < today;
+      
+      days.push(
+        <div key={day} className={`h-24 border border-gray-200 p-1 ${isToday ? 'bg-blue-50 border-blue-300' : ''} ${isPast ? 'bg-gray-50' : ''}`}>
+          <div className={`text-sm font-medium ${isToday ? 'text-blue-600' : isPast ? 'text-gray-400' : 'text-gray-900'}`}>
+            {day}
+          </div>
+          <div className="mt-1 space-y-1">
+            {dayBookings.slice(0, 2).map((booking, index) => (
+              <div
+                key={booking.id}
+                className={`text-xs px-1 py-0.5 rounded truncate ${
+                  booking.status === 'approved' 
+                    ? 'bg-green-100 text-green-800' 
+                    : booking.status === 'rejected'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}
+                title={`${booking.time} - Unit ${booking.unit} (${booking.status})`}
+              >
+                {booking.time} - {booking.unit}
+              </div>
+            ))}
+            {dayBookings.length > 2 && (
+              <div className="text-xs text-gray-500">+{dayBookings.length - 2} more</div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    return days;
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(prev.getMonth() - 1);
+      } else {
+        newDate.setMonth(prev.getMonth() + 1);
+      }
+      return newDate;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -222,6 +322,73 @@ export default function BookLift() {
               Book Lift
             </button>
           </form>
+
+          {/* Calendar View Toggle */}
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => setShowCalendar(!showCalendar)}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <FaCalendarAlt />
+              {showCalendar ? 'Hide Calendar' : 'View Booking Calendar'}
+            </button>
+          </div>
+
+          {/* Calendar View */}
+          {showCalendar && mounted && (
+            <div className="mt-8 bg-white rounded-lg p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Lift Bookings Calendar
+                </h3>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => navigateMonth('prev')}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <FaChevronLeft className="text-gray-600" />
+                  </button>
+                  <h4 className="text-lg font-medium text-gray-800 min-w-[200px] text-center">
+                    {mounted ? currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Loading...'}
+                  </h4>
+                  <button
+                    onClick={() => navigateMonth('next')}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <FaChevronRight className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="flex flex-wrap gap-4 mb-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-100 border border-green-200 rounded"></div>
+                  <span>Approved</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-100 border border-yellow-200 rounded"></div>
+                  <span>Pending</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-100 border border-red-200 rounded"></div>
+                  <span>Rejected</span>
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden">
+                {/* Day headers */}
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="bg-gray-100 p-3 text-center text-sm font-medium text-gray-700 border-b border-gray-200">
+                    {day}
+                  </div>
+                ))}
+                {/* Calendar days */}
+                {renderCalendar()}
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 bg-gray-50 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">

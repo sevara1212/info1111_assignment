@@ -31,7 +31,7 @@ interface AuthContextType {
   user: User | null;
   userData: UserData | null;
   loading: boolean;
-  signIn: (email: string, password: string, role: 'resident' | 'admin') => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string, role: 'resident' | 'admin') => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (name: string, email: string, apartment?: string, unitNumber?: string) => Promise<void>;
@@ -85,40 +85,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  const signIn = async (email: string, password: string, role: 'resident' | 'admin') => {
-    console.log('signIn called with:', email, password, role);
+  const signIn = async (email: string, password: string) => {
     try {
-      console.log('Calling signInWithEmailAndPassword with:', auth, email, password);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Firebase auth successful:', userCredential.user.uid);
-      
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-      console.log('Firestore document exists:', userDoc.exists());
-      
-      if (!userDoc.exists()) {
+      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserRole(userData.role);
+        setUserData(userData);
+        Cookies.set('auth', 'true');
+        Cookies.set('userRole', userData.role);
+        if (userData.role === 'admin') {
+          window.location.href = '/admin/dashboard';
+        } else if (userData.role === 'resident') {
+          window.location.href = '/dashboard';
+        } else {
+          throw new Error('Invalid user role');
+        }
+      } else {
+        setUserData(null);
+        setUserRole(null);
         throw new Error('User data not found');
       }
-      
-      setUserRole(role);
-      
-      // Set HttpOnly cookies for middleware
-      await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auth: 'true', userRole: role }),
-      });
-      
-      // Force a full page reload to ensure cookies are sent
-      if (role === 'admin') {
-        console.log('Redirecting to admin dashboard');
-        window.location.replace('app/admin/dashboard');
-      } else {
-        console.log('Redirecting to resident dashboard');
-        window.location.replace('/dashboard');
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      throw new Error(error.message || 'Failed to sign in');
+    } catch (error) {
+      setUserData(null);
+      setUserRole(null);
+      Cookies.remove('auth');
+      Cookies.remove('userRole');
+      console.error('Error signing in:', error);
+      throw error;
     }
   };
 

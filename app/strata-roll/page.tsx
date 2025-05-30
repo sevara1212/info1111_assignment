@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { FaUsers, FaSearch, FaSpinner } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
@@ -20,10 +20,10 @@ interface Owner {
 export default function StrataRollPage() {
   const { userData, isAdmin } = useAuth();
   const router = useRouter();
-  const [owners, setOwners] = useState<Owner[]>([]);
+  const [units, setUnits] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     if (!userData) {
@@ -34,36 +34,18 @@ export default function StrataRollPage() {
       router.push('/dashboard');
       return;
     }
-    fetchOwners();
+    const unsub = onSnapshot(collection(db, 'users'), (snap) => {
+      setUnits(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    });
+    return () => unsub();
   }, [userData, isAdmin, router]);
 
-  const fetchOwners = async () => {
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, 'users'),
-        orderBy('apartment')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const ownersData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Owner[];
-      
-      setOwners(ownersData);
-    } catch (error) {
-      console.error('Error fetching owners:', error);
-      setError('Failed to load strata roll information');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredOwners = owners.filter(owner => 
-    owner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    owner.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    owner.apartment.toString().includes(searchTerm)
+  const filtered = units.filter(u =>
+    u.name?.toLowerCase().includes(search.toLowerCase()) ||
+    u.email?.toLowerCase().includes(search.toLowerCase()) ||
+    (u.apartment + '').includes(search) ||
+    (u.unit + '').includes(search)
   );
 
   if (!isAdmin) {
@@ -80,95 +62,45 @@ export default function StrataRollPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-        <FaUsers className="text-blue-600" />
-        Strata Roll
-      </h1>
-
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="mb-6">
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or apartment number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+    <div className="max-w-5xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">Resident Directory</h1>
+      <div className="mb-4 text-lg font-semibold text-green-700">{units.length} units</div>
+      <input
+        className="mb-4 px-4 py-2 border rounded w-full"
+        placeholder="Search by name, email, unit..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <FaSpinner className="animate-spin text-blue-600 text-2xl" />
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <FaSpinner className="animate-spin text-blue-600 text-2xl" />
-          </div>
-        ) : error ? (
-          <div className="text-red-500 text-center py-8">{error}</div>
-        ) : filteredOwners.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No owners found</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unit
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Entitlements
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOwners.map((owner) => (
-                  <tr key={owner.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {owner.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {owner.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {owner.apartment} (Floor {owner.floor})
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {owner.entitlements}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        owner.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {owner.role.charAt(0).toUpperCase() + owner.role.slice(1)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      ) : error ? (
+        <div className="text-red-500 text-center py-8">{error}</div>
+      ) : filtered.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">No units found</p>
+      ) : (
+        <table className="w-full bg-white rounded-xl shadow">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="p-3 text-left">Name</th>
+              <th className="p-3 text-left">Email</th>
+              <th className="p-3 text-left">Unit</th>
+              <th className="p-3 text-left">Entitlement</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((u) => (
+              <tr key={u.id} className="border-b">
+                <td className="p-3">{u.name}</td>
+                <td className="p-3">{u.email}</td>
+                <td className="p-3">{u.unit || u.apartment}</td>
+                <td className="p-3">{u.entitlements || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 } 
