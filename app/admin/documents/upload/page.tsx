@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { FaUpload, FaSpinner, FaFile, FaCheck, FaTimes } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
@@ -86,22 +86,29 @@ export default function AdminDocumentUploadPage() {
       const fileExtension = file.name.split('.').pop();
       const fileName = `${timestamp}_${title.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExtension}`;
       
-      // Upload file to Firebase Storage
+      // Upload file to Firebase Storage with progress tracking
       const fileRef = ref(storage, `documents/${fileName}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
       
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
+      // Monitor upload progress
+      await new Promise((resolve, reject) => {
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            // Calculate and update progress
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 90; // Reserve 10% for metadata save
+            setUploadProgress(Math.round(progress));
+          },
+          (error) => {
+            console.error('Upload error:', error);
+            reject(error);
+          },
+          () => {
+            // Upload completed successfully
+            resolve(uploadTask.snapshot);
           }
-          return prev + 10;
-        });
-      }, 200);
+        );
+      });
       
-      await uploadBytes(fileRef, file);
-      clearInterval(progressInterval);
       setUploadProgress(95);
       
       // Get download URL
@@ -139,9 +146,24 @@ export default function AdminDocumentUploadPage() {
         if (fileInput) fileInput.value = '';
       }, 2000);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      setError('Failed to upload document. Please try again.');
+      let errorMessage = 'Failed to upload document. Please try again.';
+      
+      // Provide more specific error messages
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = 'You do not have permission to upload files. Please contact an administrator.';
+      } else if (error.code === 'storage/canceled') {
+        errorMessage = 'Upload was canceled.';
+      } else if (error.code === 'storage/unknown') {
+        errorMessage = 'An unknown error occurred. Please check your internet connection and try again.';
+      } else if (error.code === 'storage/invalid-format') {
+        errorMessage = 'Invalid file format. Please upload a PDF, Word document, or image.';
+      } else if (error.code === 'storage/invalid-argument') {
+        errorMessage = 'Invalid file. Please select a valid file and try again.';
+      }
+      
+      setError(errorMessage);
       setUploadProgress(0);
     } finally {
       setUploading(false);

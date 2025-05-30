@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { FaSpinner, FaTools, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaUsers, FaChartBar, FaFileAlt } from 'react-icons/fa';
+import { FaSpinner, FaTools, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaUsers, FaChartBar, FaFileAlt, FaDollarSign } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
-import { collection, query, where, onSnapshot, getCountFromServer } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getCountFromServer, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const ADMIN_ROLES = [
@@ -30,6 +30,7 @@ export default function AdminDashboard() {
   const [unitCount, setUnitCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [activity, setActivity] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
   useEffect(() => {
     console.log('user:', user);
@@ -81,6 +82,24 @@ export default function AdminDashboard() {
     getCountFromServer(collection(db, 'logs')).then(snap => setActivity(snap.data().count || 0));
   }, []);
 
+  useEffect(() => {
+    // Fetch amenity payments revenue
+    const fetchRevenue = async () => {
+      try {
+        const q = query(collection(db, 'amenity_payments'));
+        const querySnapshot = await getDocs(q);
+        const total = querySnapshot.docs.reduce((sum, doc) => {
+          const data = doc.data();
+          return sum + (data.amount || 0);
+        }, 0);
+        setTotalRevenue(total);
+      } catch (error) {
+        console.error('Error fetching revenue:', error);
+      }
+    };
+    fetchRevenue();
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -110,6 +129,7 @@ export default function AdminDashboard() {
           <Link href="/admin/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaTools style={{ color: '#22d3ee' }} /> Maintenance</Link>
           <Link href="/admin/lift-bookings" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaClipboardCheck style={{ color: '#22d3ee' }} /> Lift Bookings</Link>
           <Link href="/admin/documents" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaFileAlt style={{ color: '#22d3ee' }} /> Documents</Link>
+          <Link href="/admin/amenity-payments" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaDollarSign style={{ color: '#22d3ee' }} /> Amenity Payments</Link>
           <Link href="/strata-roll" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaUsers style={{ color: '#22d3ee' }} /> Strata Roll</Link>
           <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaDownload style={{ color: '#22d3ee' }} /> Downloads</Link>
           <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base text-white border border-green-500"><FaPhone style={{ color: '#22d3ee' }} /> Contact</Link>
@@ -148,6 +168,11 @@ export default function AdminDashboard() {
               <FaDownload className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
               <div className="font-semibold text-xl text-green-200">Document Management</div>
               <div className="text-green-400 mt-2 text-lg font-bold">{docCount} files</div>
+            </Link>
+            <Link href="/admin/amenity-payments" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
+              <FaDollarSign className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
+              <div className="font-semibold text-xl text-green-200">Amenity Payments</div>
+              <div className="text-green-400 mt-2 text-lg font-bold">${totalRevenue}</div>
             </Link>
             <Link href="/strata-roll" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
               <FaUsers className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
