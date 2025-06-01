@@ -1,0 +1,23 @@
+[
+  {
+    "origin": [
+      "http://localhost:3000",
+      "http://localhost:3001", 
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+      "https://strata-91ddf.firebaseapp.com",
+      "https://strata-91ddf.web.app"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "X-Firebase-Storage-Version",
+      "X-Firebase-GMPID",
+      "Access-Control-Allow-Origin",
+      "Access-Control-Allow-Headers"
+    ]
+  }
+] 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db, storage } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FaUpload, FaSpinner, FaFile, FaCheck, FaTimes } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
@@ -19,6 +19,7 @@ export default function AdminDocumentUploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [testingConnection, setTestingConnection] = useState(false);
 
   // Show loading while auth is still loading
   if (authLoading) {
@@ -56,7 +57,7 @@ export default function AdminDocumentUploadPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Validate file size (max 10MB)
+      // Validate file size (back to 10MB)
       if (selectedFile.size > 10 * 1024 * 1024) {
         setError('File size must be less than 10MB');
         return;
@@ -102,92 +103,72 @@ export default function AdminDocumentUploadPage() {
     setUploadProgress(0);
 
     try {
-      console.log('=== UPLOAD DEBUG START ===');
-      console.log('Starting upload process...');
+      console.log('=== SIMPLE UPLOAD START ===');
+      console.log('Starting simple upload process...');
       console.log('User:', user?.email);
-      console.log('User authenticated:', !!user);
       console.log('File:', file.name, file.size, file.type);
+      console.log('Current URL:', window.location.origin);
+      console.log('Firebase Storage bucket:', storage.app.options.storageBucket);
 
-      // Test Firebase Auth
-      if (user) {
-        try {
-          const token = await user.getIdToken();
-          console.log('Auth token exists:', !!token);
-          console.log('Token length:', token.length);
-        } catch (tokenError) {
-          console.error('Failed to get auth token:', tokenError);
-        }
+      // Test Firebase Auth first
+      if (!user) {
+        throw new Error('User not authenticated');
       }
 
+      setUploadProgress(10);
+      
       // Create a unique filename
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${timestamp}_${title.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExtension}`;
       
       console.log('Generated filename:', fileName);
+      setUploadProgress(20);
 
-      // Test storage reference creation
-      console.log('Creating storage reference...');
+      // Create storage reference
       const fileRef = ref(storage, `documents/${fileName}`);
       console.log('Storage reference created:', fileRef.fullPath);
-      console.log('Storage bucket:', fileRef.bucket);
+      setUploadProgress(30);
       
-      // Test uploadBytesResumable creation
-      console.log('Creating upload task...');
-      const uploadTask = uploadBytesResumable(fileRef, file);
-      console.log('Upload task created successfully');
-      console.log('Upload task state:', uploadTask.snapshot.state);
+      // Try different upload approaches to bypass CORS
+      console.log('Starting upload with retry logic...');
+      setUploadProgress(40);
       
-      // Add timeout to catch if upload never starts
-      const uploadTimeout = setTimeout(() => {
-        console.error('Upload timeout - task never started progress');
-        uploadTask.cancel();
-        setError('Upload timed out. Please check your internet connection and try again.');
-        setUploading(false);
-        setUploadProgress(0);
-      }, 30000); // 30 second timeout
-      
-      // Monitor upload progress
-      await new Promise((resolve, reject) => {
-        uploadTask.on('state_changed',
-          (snapshot) => {
-            // Calculate and update progress
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 90;
-            console.log(`Upload progress: ${progress}% (${snapshot.bytesTransferred}/${snapshot.totalBytes})`);
-            console.log('Upload state:', snapshot.state);
-            setUploadProgress(Math.round(progress));
-            
-            // Clear timeout if progress is happening
-            if (snapshot.bytesTransferred > 0) {
-              clearTimeout(uploadTimeout);
-            }
-          },
-          (error) => {
-            clearTimeout(uploadTimeout);
-            console.error('Upload error:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            console.error('Full error object:', error);
-            reject(error);
-          },
-          () => {
-            clearTimeout(uploadTimeout);
-            console.log('Upload completed successfully');
-            resolve(uploadTask.snapshot);
-          }
-        );
+      let uploadResult;
+      try {
+        // Approach 1: Simple uploadBytes
+        console.log('Trying simple uploadBytes...');
+        uploadResult = await uploadBytes(fileRef, file);
+        console.log('✅ Simple upload successful:', uploadResult);
+      } catch (uploadError: any) {
+        console.log('Simple upload failed, trying alternative approach...');
+        console.error('Upload error:', uploadError);
         
-        // Log initial state
-        console.log('Upload listener attached, initial state:', uploadTask.snapshot.state);
-      });
+        // If CORS error, try with different metadata
+        if (uploadError.message?.includes('CORS') || uploadError.code === 'storage/unknown') {
+          console.log('Detected CORS issue, trying with custom metadata...');
+          const metadata = {
+            contentType: file.type,
+            cacheControl: 'public,max-age=3600',
+            customMetadata: {
+              uploadedBy: user.uid,
+              originalName: file.name
+            }
+          };
+          uploadResult = await uploadBytes(fileRef, file, metadata);
+          console.log('✅ Upload with metadata successful:', uploadResult);
+        } else {
+          throw uploadError;
+        }
+      }
       
-      setUploadProgress(95);
-      console.log('Getting download URL...');
+      setUploadProgress(80);
       
       // Get download URL
+      console.log('Getting download URL...');
       const fileUrl = await getDownloadURL(fileRef);
       console.log('Download URL obtained:', fileUrl);
-      setUploadProgress(98);
+      setUploadProgress(90);
       
       console.log('Saving metadata to Firestore...');
       // Save document metadata to Firestore
@@ -218,37 +199,95 @@ export default function AdminDocumentUploadPage() {
       setTitle('');
       setDescription('');
       setVisibility('resident');
-      setUploadProgress(0);
       
       // Optional: redirect after a delay
       setTimeout(() => {
+        setUploadProgress(0);
         router.push('/admin/documents');
       }, 2000);
       
-      console.log('=== UPLOAD DEBUG SUCCESS ===');
+      console.log('=== SIMPLE UPLOAD SUCCESS ===');
       
     } catch (error: any) {
-      console.error('=== UPLOAD DEBUG ERROR ===');
+      console.error('=== SIMPLE UPLOAD ERROR ===');
       console.error('Upload failed:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      console.error('Full error object:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        name: error.name
+      });
       
-      if (error.code === 'storage/unauthorized') {
-        setError('Storage access denied. Please check your authentication and permissions.');
-      } else if (error.code === 'storage/canceled') {
-        setError('Upload was canceled.');
-      } else if (error.code === 'storage/unknown') {
-        setError('An unknown error occurred during upload.');
-      } else if (error.code === 'permission-denied') {
-        setError('Permission denied. You may not have the required permissions to upload documents.');
-      } else if (error.code === 'unavailable') {
-        setError('Service is temporarily unavailable. Please try again later.');
-      } else {
-        setError(`Upload failed: ${error.message || 'Unknown error'}`);
+      // Provide more specific error messages
+      let errorMessage = 'Upload failed: ';
+      switch (error.code) {
+        case 'storage/unauthorized':
+          errorMessage += 'You do not have permission to upload files. Please check your account permissions.';
+          break;
+        case 'storage/canceled':
+          errorMessage += 'Upload was canceled. Please try again.';
+          break;
+        case 'storage/unknown':
+          errorMessage += 'An unknown error occurred. Please check your internet connection and try again.';
+          break;
+        case 'storage/quota-exceeded':
+          errorMessage += 'Storage quota exceeded. Please contact building management.';
+          break;
+        case 'storage/unauthenticated':
+          errorMessage += 'Authentication expired. Please log out and log back in.';
+          break;
+        case 'storage/retry-limit-exceeded':
+          errorMessage += 'Too many retry attempts. Please wait a moment and try again.';
+          break;
+        default:
+          errorMessage += error.message || 'Unknown error';
       }
+      
+      setError(errorMessage);
+      setUploadProgress(0);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const testFirebaseConnection = async () => {
+    setTestingConnection(true);
+    setError('');
+    
+    try {
+      console.log('=== FIREBASE CONNECTION TEST ===');
+      
+      // Test 1: Auth
+      console.log('Testing authentication...');
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      const token = await user.getIdToken();
+      console.log('✅ Authentication working, token length:', token.length);
+      
+      // Skip storage upload test to avoid CORS issues
+      console.log('✅ Skipping storage test to avoid CORS');
+      
+      setSuccess('Firebase authentication test passed! You can now try uploading your document.');
+      console.log('=== CONNECTION TEST PASSED ===');
+      
+    } catch (error: any) {
+      console.error('=== CONNECTION TEST FAILED ===');
+      console.error('Connection test error:', error);
+      
+      let errorMsg = 'Connection test failed: ';
+      if (error.code === 'storage/unauthorized') {
+        errorMsg += 'Storage access denied. Your account may not have upload permissions.';
+      } else if (error.message?.includes('CORS')) {
+        errorMsg += 'CORS policy error. This might be a Firebase project configuration issue.';
+      } else {
+        errorMsg += error.message || 'Unknown error';
+      }
+      
+      setError(errorMsg);
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -419,6 +458,40 @@ export default function AdminDocumentUploadPage() {
                 </div>
               </div>
             )}
+
+            {/* Test Connection Button */}
+            <div>
+              <button
+                type="button"
+                onClick={testFirebaseConnection}
+                disabled={testingConnection}
+                className="w-full py-2 px-4 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border"
+                style={{ 
+                  borderColor: '#CFCFCF',
+                  backgroundColor: '#F9F7F1',
+                  color: '#1A1A1A'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#EDEDED';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#F9F7F1';
+                  }
+                }}
+              >
+                {testingConnection ? (
+                  <span className="flex items-center justify-center">
+                    <FaSpinner className="animate-spin mr-2" />
+                    Testing Connection...
+                  </span>
+                ) : (
+                  'Test Firebase Connection'
+                )}
+              </button>
+            </div>
 
             {/* Submit Button */}
             <div className="flex gap-4">

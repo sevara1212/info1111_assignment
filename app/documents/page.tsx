@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { FaSpinner, FaFile, FaImage, FaFilePdf, FaFileWord, FaDownload, FaEye, FaUsers, FaGlobe, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
 
 interface Document {
@@ -28,10 +28,15 @@ export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisibility, setSelectedVisibility] = useState<'all' | 'resident' | 'public'>('all');
   const [retryCount, setRetryCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    
     if (user && userData) {
-      fetchDocuments();
+      // Use simple query instead of real-time listener to avoid 400 errors
+      fallbackToSimpleQuery();
+      // unsubscribe = setupRealtimeDocuments();
     } else if (user && !userData) {
       // User is authenticated but userData is not loaded yet, wait a bit
       const timer = setTimeout(() => {
@@ -41,13 +46,21 @@ export default function DocumentsPage() {
       }, 1000);
       return () => clearTimeout(timer);
     }
+
+    // Cleanup function
+    return () => {
+      if (unsubscribe) {
+        console.log('Cleaning up real-time listener...');
+        unsubscribe();
+      }
+    };
   }, [user, userData, retryCount]);
 
   useEffect(() => {
     filterDocuments();
   }, [documents, searchTerm, selectedVisibility]);
 
-  const fetchDocuments = async () => {
+  const setupRealtimeDocuments = () => {
     if (!user || !userData) {
       setError('Please log in to view documents');
       setLoading(false);
@@ -56,97 +69,118 @@ export default function DocumentsPage() {
 
     try {
       setError('');
-      console.log('Fetching documents for user:', userData);
+      console.log('Setting up real-time documents for user:', userData);
       
-      // Try multiple approaches to get documents
-      let allDocs: Document[] = [];
+      // Set up real-time listener for documents collection
+      const documentsQuery = query(collection(db, 'documents'));
       
-      // Approach 1: Try to get all documents without ordering
-      try {
-        console.log('Trying basic query...');
-        const basicQuery = query(collection(db, 'documents'));
-        const snapshot = await getDocs(basicQuery);
-        allDocs = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Document[];
-        console.log('Basic query successful, found:', allDocs.length, 'documents');
-      } catch (basicError: any) {
-        console.error('Basic query failed:', basicError);
-        
-        // Approach 2: Try with specific visibility filters
-        try {
-          console.log('Trying visibility-based queries...');
-          const publicQuery = query(collection(db, 'documents'), where('visibility', '==', 'public'));
-          const publicSnapshot = await getDocs(publicQuery);
+      const unsubscribe = onSnapshot(documentsQuery, 
+        (snapshot) => {
+          console.log('Real-time update received, documents count:', snapshot.docs.length);
           
-          const residentQuery = query(collection(db, 'documents'), where('visibility', '==', 'resident'));
-          const residentSnapshot = await getDocs(residentQuery);
+          const allDocs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Document[];
           
-          allDocs = [
-            ...publicSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-            ...residentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-          ] as Document[];
+          console.log('All documents from real-time update:', allDocs);
           
-          // If user is admin, also get admin documents
-          if (userData.role === 'admin') {
-            const adminQuery = query(collection(db, 'documents'), where('visibility', '==', 'admin'));
-            const adminSnapshot = await getDocs(adminQuery);
-            allDocs.push(...adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Document[]);
+          // Filter documents based on user role and visibility
+          let visibleDocs = allDocs;
+          
+          if (userData?.role !== 'admin') {
+            // For non-admin users, only show resident and public documents
+            visibleDocs = allDocs.filter(doc => 
+              doc.visibility === 'resident' || doc.visibility === 'public'
+            );
           }
           
-          console.log('Visibility-based queries successful, found:', allDocs.length, 'documents');
-        } catch (visibilityError: any) {
-          console.error('Visibility-based queries failed:', visibilityError);
-          throw visibilityError;
+          // Sort by upload date if available
+          visibleDocs.sort((a, b) => {
+            const dateA = a.uploadedAt?.toDate?.() || new Date(0);
+            const dateB = b.uploadedAt?.toDate?.() || new Date(0);
+            return dateB.getTime() - dateA.getTime();
+          });
+          
+          console.log('Final visible documents:', visibleDocs);
+          setDocuments(visibleDocs);
+          setLoading(false);
+          
+          if (visibleDocs.length === 0) {
+            setError('No documents found. Documents will appear here when they are uploaded.');
+          } else {
+            setError(''); // Clear any previous errors
+          }
+        },
+        (error) => {
+          console.error('Real-time listener error:', error);
+          
+          // Fallback to a simple query if real-time fails
+          console.log('Falling back to simple query...');
+          fallbackToSimpleQuery();
         }
-      }
+      );
       
-      // Filter documents based on user role and visibility (client-side filtering as backup)
+      // Return cleanup function
+      return unsubscribe;
+      
+    } catch (error: any) {
+      console.error('Error setting up real-time documents:', error);
+      console.log('Falling back to simple query...');
+      fallbackToSimpleQuery();
+    }
+  };
+
+  const fallbackToSimpleQuery = async () => {
+    try {
+      console.log('Executing fallback simple query...');
+      const documentsQuery = query(collection(db, 'documents'));
+      const snapshot = await getDocs(documentsQuery);
+      
+      const allDocs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Document[];
+      
+      // Filter documents based on user role and visibility
       let visibleDocs = allDocs;
       
       if (userData?.role !== 'admin') {
-        // For non-admin users, only show resident and public documents
         visibleDocs = allDocs.filter(doc => 
           doc.visibility === 'resident' || doc.visibility === 'public'
         );
       }
       
-      // Remove duplicates (in case we got the same document from multiple queries)
-      const uniqueDocs = visibleDocs.filter((doc, index, self) => 
-        index === self.findIndex(d => d.id === doc.id)
-      );
-      
       // Sort by upload date if available
-      uniqueDocs.sort((a, b) => {
+      visibleDocs.sort((a, b) => {
         const dateA = a.uploadedAt?.toDate?.() || new Date(0);
         const dateB = b.uploadedAt?.toDate?.() || new Date(0);
         return dateB.getTime() - dateA.getTime();
       });
       
-      console.log('Final visible documents:', uniqueDocs);
-      setDocuments(uniqueDocs);
+      console.log('Fallback query successful, documents:', visibleDocs);
+      setDocuments(visibleDocs);
+      setLoading(false);
       
-      if (uniqueDocs.length === 0) {
-        setError('No documents found. Documents may not have been uploaded yet, or you may not have permission to view them.');
+      if (visibleDocs.length === 0) {
+        setError('No documents found. Documents will appear here when they are uploaded.');
+      } else {
+        setError('');
       }
       
-    } catch (error: any) {
-      console.error('Error fetching documents:', error);
+    } catch (fallbackError: any) {
+      console.error('Fallback query also failed:', fallbackError);
       
       // Provide more specific error messages
-      if (error.code === 'permission-denied') {
+      if (fallbackError.code === 'permission-denied') {
         setError('Permission denied. This may be due to Firestore security rules. Please contact an administrator.');
-      } else if (error.code === 'unavailable') {
+      } else if (fallbackError.code === 'unavailable') {
         setError('Service is temporarily unavailable. Please try again later.');
-      } else if (error.code === 'failed-precondition') {
-        setError('Database index is being built. Please try again in a few minutes.');
-      } else if (error.code === 'unauthenticated') {
+      } else if (fallbackError.code === 'unauthenticated') {
         setError('Authentication expired. Please log out and log back in.');
       } else {
-        setError(`Failed to load documents: ${error.message || 'Unknown error'}. Please try refreshing the page.`);
+        setError(`Failed to load documents: ${fallbackError.message || 'Unknown error'}. Please try refreshing the page.`);
       }
-    } finally {
       setLoading(false);
     }
   };
@@ -201,6 +235,22 @@ export default function DocumentsPage() {
     }
   };
 
+  // Helper function to check if document is new (uploaded in last 24 hours)
+  const isNewUpload = (uploadedAt: any) => {
+    if (!uploadedAt?.toDate) return false;
+    const uploadDate = uploadedAt.toDate();
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return uploadDate > oneDayAgo;
+  };
+
+  // Separate documents into new uploads and older documents
+  const separateDocuments = (docs: Document[]) => {
+    const newUploads = docs.filter(doc => isNewUpload(doc.uploadedAt));
+    const olderDocs = docs.filter(doc => !isNewUpload(doc.uploadedAt));
+    return { newUploads, olderDocs };
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
@@ -227,7 +277,44 @@ export default function DocumentsPage() {
     <div className="min-h-screen py-8" style={{ backgroundColor: '#EDEDED' }}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#1A1A1A' }}>Documents</h1>
+          <div className="flex justify-between items-center mb-2">
+            <h1 className="text-3xl font-bold" style={{ color: '#1A1A1A' }}>Documents</h1>
+            <button
+              onClick={async () => {
+                setRefreshing(true);
+                await fallbackToSimpleQuery();
+                setRefreshing(false);
+              }}
+              disabled={refreshing}
+              className="px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+              style={{ 
+                backgroundColor: '#38A169',
+                color: 'white'
+              }}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#CBA135';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#38A169';
+                }
+              }}
+            >
+              {refreshing ? (
+                <span className="flex items-center">
+                  <FaSpinner className="animate-spin mr-2" />
+                  Refreshing...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <FaDownload className="mr-2" />
+                  Refresh Documents
+                </span>
+              )}
+            </button>
+          </div>
           <p style={{ color: '#1A1A1A' }}>Access important documents and resources</p>
           
           {/* Debug info for troubleshooting */}
@@ -289,7 +376,7 @@ export default function DocumentsPage() {
                   onClick={() => {
                     setLoading(true);
                     setError('');
-                    fetchDocuments();
+                    fallbackToSimpleQuery();
                   }}
                   className="mt-3 px-3 py-1 text-sm font-medium rounded transition-colors"
                   style={{ 
