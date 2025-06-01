@@ -32,10 +32,10 @@ export default function AdminDocumentsPage() {
   // Show loading while auth is still loading
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <FaSpinner className="animate-spin text-4xl mx-auto mb-4" style={{ color: '#38A169' }} />
+          <p style={{ color: '#1A1A1A' }}>Loading...</p>
         </div>
       </div>
     );
@@ -50,11 +50,11 @@ export default function AdminDocumentsPage() {
 
   if (!user || !userData || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You need admin privileges to access this page.</p>
-          <p className="text-sm text-gray-500 mt-2">
+          <h1 className="text-2xl font-bold mb-4" style={{ color: '#e53e3e' }}>Access Denied</h1>
+          <p style={{ color: '#1A1A1A' }}>You need admin privileges to access this page.</p>
+          <p className="text-sm mt-2" style={{ color: '#CFCFCF' }}>
             Current user: {user?.email || 'Not logged in'} | Role: {userData?.role || 'No role'}
           </p>
         </div>
@@ -155,18 +155,18 @@ export default function AdminDocumentsPage() {
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FaFilePdf className="text-red-500" />;
-    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord className="text-blue-500" />;
-    if (fileType.includes('image')) return <FaImage className="text-green-500" />;
-    return <FaFile className="text-gray-500" />;
+    if (fileType.includes('pdf')) return <FaFilePdf style={{ color: '#e53e3e' }} />;
+    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord style={{ color: '#38A169' }} />;
+    if (fileType.includes('image')) return <FaImage style={{ color: '#CBA135' }} />;
+    return <FaFile style={{ color: '#CFCFCF' }} />;
   };
 
   const getVisibilityIcon = (visibility: string) => {
     switch (visibility) {
-      case 'admin': return <FaUserShield className="text-red-500" />;
-      case 'resident': return <FaUsers className="text-blue-500" />;
-      case 'public': return <FaGlobe className="text-green-500" />;
-      default: return <FaUsers className="text-gray-500" />;
+      case 'admin': return <FaUserShield style={{ color: '#e53e3e' }} />;
+      case 'resident': return <FaUsers style={{ color: '#38A169' }} />;
+      case 'public': return <FaGlobe style={{ color: '#CBA135' }} />;
+      default: return <FaUsers style={{ color: '#CFCFCF' }} />;
     }
   };
 
@@ -181,138 +181,185 @@ export default function AdminDocumentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading documents...</p>
+          <FaSpinner className="animate-spin text-4xl mx-auto mb-4" style={{ color: '#38A169' }} />
+          <p style={{ color: '#1A1A1A' }}>Loading documents...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8" style={{ backgroundColor: '#EDEDED' }}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Document Management</h1>
-            <p className="text-gray-600 mt-2">Manage documents for residents and admins</p>
+            <h1 className="text-3xl font-bold" style={{ color: '#1A1A1A' }}>Document Management</h1>
+            <p className="mt-2" style={{ color: '#1A1A1A' }}>Manage documents for residents and admins</p>
           </div>
           <Link
             href="/admin/documents/upload"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="inline-flex items-center px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors"
+            style={{ 
+              backgroundColor: '#38A169',
+              color: 'white'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#CBA135';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#38A169';
+            }}
           >
-            <FaUpload />
+            <FaUpload className="mr-2" />
             Upload Document
           </Link>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center justify-between">
-              <span>{error}</span>
-              <button
-                onClick={() => {
-                  setLoading(true);
-                  fetchDocuments();
-                }}
-                className="ml-4 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-              >
-                Retry
-              </button>
-            </div>
+          <div className="mb-6 p-4 rounded-md" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444', border: '1px solid' }}>
+            <p style={{ color: '#ef4444' }}>{error}</p>
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {documents.length === 0 && !error ? (
-            <div className="text-center py-12">
-              <FaFile className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">No documents uploaded</h3>
-              <p className="text-gray-600 mb-6">Start by uploading your first document</p>
-              <Link
-                href="/admin/documents/upload"
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-              >
-                <FaUpload />
-                Upload Document
-              </Link>
-            </div>
-          ) : documents.length > 0 ? (
+        {documents.length === 0 ? (
+          <div className="text-center py-12 rounded-lg" style={{ backgroundColor: '#F9F7F1' }}>
+            <FaFile className="text-6xl mx-auto mb-4" style={{ color: '#CFCFCF' }} />
+            <h3 className="text-xl font-medium mb-2" style={{ color: '#1A1A1A' }}>No documents uploaded</h3>
+            <p className="mb-6" style={{ color: '#CFCFCF' }}>Upload your first document to get started</p>
+            <Link
+              href="/admin/documents/upload"
+              className="inline-flex items-center px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors"
+              style={{ 
+                backgroundColor: '#38A169',
+                color: 'white'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#CBA135';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#38A169';
+              }}
+            >
+              <FaUpload className="mr-2" />
+              Upload Document
+            </Link>
+          </div>
+        ) : (
+          <div className="rounded-lg overflow-hidden shadow-lg" style={{ backgroundColor: '#F9F7F1' }}>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead style={{ backgroundColor: '#CFCFCF' }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#1A1A1A' }}>
                       Document
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#1A1A1A' }}>
                       Visibility
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Size
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#1A1A1A' }}>
                       Uploaded
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: '#1A1A1A' }}>
+                      Size
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: '#1A1A1A' }}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {documents.map((document) => (
-                    <tr key={document.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                <tbody className="divide-y divide-gray-300">
+                  {documents.map((document, index) => (
+                    <tr 
+                      key={document.id} 
+                      className="hover:bg-opacity-50"
+                      style={{ 
+                        backgroundColor: index % 2 === 0 ? '#F9F7F1' : '#EDEDED'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(203, 161, 53, 0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#F9F7F1' : '#EDEDED';
+                      }}
+                    >
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center">
+                          <div className="flex-shrink-0 mr-3">
                             {getFileIcon(document.fileType)}
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                          <div>
+                            <div className="text-sm font-medium" style={{ color: '#1A1A1A' }}>
                               {document.title}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {document.description || 'No description'}
-                            </div>
+                            {document.description && (
+                              <div className="text-sm" style={{ color: '#CFCFCF' }}>
+                                {document.description}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          {getVisibilityIcon(document.visibility)}
-                          <span className="text-sm text-gray-900">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="mr-2">
+                            {getVisibilityIcon(document.visibility)}
+                          </div>
+                          <span className="text-sm" style={{ color: '#1A1A1A' }}>
                             {getVisibilityLabel(document.visibility)}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatFileSize(document.fileSize)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 text-sm" style={{ color: '#1A1A1A' }}>
                         <div>
                           {document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
                         </div>
-                        <div className="text-xs">
+                        <div className="text-xs" style={{ color: '#CFCFCF' }}>
                           by {document.uploaderName}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={document.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
-                            title="View document"
+                      <td className="px-6 py-4 text-sm" style={{ color: '#1A1A1A' }}>
+                        {formatFileSize(document.fileSize)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-center space-x-2">
+                          <button
+                            onClick={() => window.open(document.fileUrl, '_blank')}
+                            className="p-2 rounded-md hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                            style={{ 
+                              backgroundColor: 'rgba(56, 161, 105, 0.1)',
+                              color: '#38A169'
+                            }}
+                            title="View Document"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(56, 161, 105, 0.2)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(56, 161, 105, 0.1)';
+                            }}
                           >
                             <FaEye />
-                          </a>
+                          </button>
                           <button
                             onClick={() => handleDelete(document)}
                             disabled={deleting === document.id}
-                            className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                            title="Delete document"
+                            className="p-2 rounded-md hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors disabled:opacity-50"
+                            style={{ 
+                              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                              color: '#ef4444'
+                            }}
+                            title="Delete Document"
+                            onMouseEnter={(e) => {
+                              if (!e.currentTarget.disabled) {
+                                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!e.currentTarget.disabled) {
+                                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                              }
+                            }}
                           >
                             {deleting === document.id ? (
                               <FaSpinner className="animate-spin" />
@@ -327,12 +374,6 @@ export default function AdminDocumentsPage() {
                 </tbody>
               </table>
             </div>
-          ) : null}
-        </div>
-
-        {documents.length > 0 && (
-          <div className="mt-6 text-center text-sm text-gray-500">
-            Total: {documents.length} document{documents.length !== 1 ? 's' : ''}
           </div>
         )}
       </div>

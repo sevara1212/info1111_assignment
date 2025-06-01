@@ -23,10 +23,10 @@ export default function AdminDocumentUploadPage() {
   // Show loading while auth is still loading
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <FaSpinner className="animate-spin text-4xl mx-auto mb-4" style={{ color: '#38A169' }} />
+          <p style={{ color: '#1A1A1A' }}>Loading...</p>
         </div>
       </div>
     );
@@ -41,11 +41,11 @@ export default function AdminDocumentUploadPage() {
 
   if (!user || !userData || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600">You need admin privileges to access this page.</p>
-          <p className="text-sm text-gray-500 mt-2">
+          <h1 className="text-2xl font-bold mb-4" style={{ color: '#e53e3e' }}>Access Denied</h1>
+          <p style={{ color: '#1A1A1A' }}>You need admin privileges to access this page.</p>
+          <p className="text-sm mt-2" style={{ color: '#CFCFCF' }}>
             Current user: {user?.email || 'Not logged in'} | Role: {userData?.role || 'No role'}
           </p>
         </div>
@@ -200,64 +200,53 @@ export default function AdminDocumentUploadPage() {
         fileType: file.type,
         uploadedAt: serverTimestamp(),
         uploadedBy: user.uid,
-        uploaderName: userData.name || user.email,
+        uploaderName: userData.firstName && userData.lastName 
+          ? `${userData.firstName} ${userData.lastName}`
+          : userData.displayName || user.email || 'Unknown User',
         visibility
       };
       
-      console.log('Document data:', docData);
-      await addDoc(collection(db, 'documents'), docData);
-      console.log('Document metadata saved successfully');
-      console.log('=== UPLOAD DEBUG END ===');
+      console.log('Document data to save:', docData);
+      const docRef = await addDoc(collection(db, 'documents'), docData);
+      console.log('Document saved with ID:', docRef.id);
       
       setUploadProgress(100);
       setSuccess('Document uploaded successfully!');
       
       // Reset form
+      setFile(null);
+      setTitle('');
+      setDescription('');
+      setVisibility('resident');
+      setUploadProgress(0);
+      
+      // Optional: redirect after a delay
       setTimeout(() => {
-        setFile(null);
-        setTitle('');
-        setDescription('');
-        setVisibility('resident');
-        setUploadProgress(0);
-        setSuccess('');
-        
-        // Reset file input
-        const fileInput = document.getElementById('file-input') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
+        router.push('/admin/documents');
       }, 2000);
       
+      console.log('=== UPLOAD DEBUG SUCCESS ===');
+      
     } catch (error: any) {
-      console.error('=== UPLOAD ERROR ===');
-      console.error('Upload error:', error);
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        stack: error.stack
-      });
+      console.error('=== UPLOAD DEBUG ERROR ===');
+      console.error('Upload failed:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Full error object:', error);
       
-      let errorMessage = 'Failed to upload document. Please try again.';
-      
-      // Provide more specific error messages
       if (error.code === 'storage/unauthorized') {
-        errorMessage = 'You do not have permission to upload files. Please contact an administrator.';
+        setError('Storage access denied. Please check your authentication and permissions.');
       } else if (error.code === 'storage/canceled') {
-        errorMessage = 'Upload was canceled.';
+        setError('Upload was canceled.');
       } else if (error.code === 'storage/unknown') {
-        errorMessage = 'An unknown error occurred. Please check your internet connection and try again.';
-      } else if (error.code === 'storage/invalid-format') {
-        errorMessage = 'Invalid file format. Please upload a PDF, Word document, or image.';
-      } else if (error.code === 'storage/invalid-argument') {
-        errorMessage = 'Invalid file. Please select a valid file and try again.';
+        setError('An unknown error occurred during upload.');
       } else if (error.code === 'permission-denied') {
-        errorMessage = 'Permission denied. Please check your admin privileges.';
-      } else if (error.code === 'storage/retry-limit-exceeded') {
-        errorMessage = 'Upload failed after multiple retries. This may be due to network issues or Firebase Storage configuration. Please try again later.';
-      } else if (error.message) {
-        errorMessage = `Upload failed: ${error.message}`;
+        setError('Permission denied. You may not have the required permissions to upload documents.');
+      } else if (error.code === 'unavailable') {
+        setError('Service is temporarily unavailable. Please try again later.');
+      } else {
+        setError(`Upload failed: ${error.message || 'Unknown error'}`);
       }
-      
-      setError(errorMessage);
-      setUploadProgress(0);
     } finally {
       setUploading(false);
     }
@@ -272,188 +261,223 @@ export default function AdminDocumentUploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="min-h-screen py-8" style={{ backgroundColor: '#EDEDED' }}>
+      <div className="max-w-2xl mx-auto px-4">
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-2"
-          >
-            ← Back to Documents
-          </button>
-          <h1 className="text-3xl font-bold text-gray-900">Upload Document</h1>
-          <p className="text-gray-600 mt-2">Upload documents for residents and admins to access</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#1A1A1A' }}>Upload Document</h1>
+          <p style={{ color: '#1A1A1A' }}>Upload documents for residents and admins to access</p>
         </div>
 
-        {/* Debug Information */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <h3 className="font-medium text-yellow-800 mb-2">Debug Information:</h3>
-          <div className="text-sm text-yellow-700 space-y-1">
-            <p><strong>User Email:</strong> {user?.email || 'Not available'}</p>
-            <p><strong>User UID:</strong> {user?.uid || 'Not available'}</p>
-            <p><strong>User Data Role:</strong> {userData?.role || 'Not available'}</p>
-            <p><strong>User Name:</strong> {userData?.name || 'Not available'}</p>
-            <p><strong>Is Admin Check:</strong> {isAdmin ? 'TRUE' : 'FALSE'}</p>
-            <p><strong>Raw User Data:</strong> {JSON.stringify(userData, null, 2)}</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="rounded-lg shadow-lg p-6" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
           <form onSubmit={handleUpload} className="space-y-6">
-            {/* File Upload */}
+            {/* File Upload Area */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#1A1A1A' }}>
                 Select File
               </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <div 
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  file ? 'border-green-300 bg-green-50' : 'hover:border-green-300'
+                }`}
+                style={{ 
+                  borderColor: file ? '#38A169' : '#CFCFCF',
+                  backgroundColor: file ? 'rgba(56, 161, 105, 0.1)' : 'transparent'
+                }}
+              >
                 <input
-                  id="file-input"
                   type="file"
                   onChange={handleFileChange}
-                  className="hidden"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                  className="hidden"
+                  id="file-upload"
+                  disabled={uploading}
                 />
-                <label
-                  htmlFor="file-input"
-                  className="cursor-pointer flex flex-col items-center"
-                >
-                  <FaUpload className="text-4xl text-gray-400 mb-4" />
-                  <span className="text-lg font-medium text-gray-700">
-                    Click to upload or drag and drop
-                  </span>
-                  <span className="text-sm text-gray-500 mt-1">
-                    PDF, Word documents, or images (max 10MB)
-                  </span>
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  {file ? (
+                    <div>
+                      <FaCheck className="text-4xl mx-auto mb-4" style={{ color: '#38A169' }} />
+                      <p className="text-lg font-medium" style={{ color: '#1A1A1A' }}>{file.name}</p>
+                      <p className="text-sm" style={{ color: '#CFCFCF' }}>
+                        {formatFileSize(file.size)} • Click to change
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <FaUpload className="text-4xl mx-auto mb-4" style={{ color: '#CFCFCF' }} />
+                      <p className="text-lg font-medium" style={{ color: '#1A1A1A' }}>
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-sm" style={{ color: '#CFCFCF' }}>
+                        PDF, Word documents, or images (max 10MB)
+                      </p>
+                    </div>
+                  )}
                 </label>
               </div>
-              
-              {file && (
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-3">
-                    <FaFile className="text-blue-600" />
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{file.name}</p>
-                      <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFile(null);
-                        const fileInput = document.getElementById('file-input') as HTMLInputElement;
-                        if (fileInput) fileInput.value = '';
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <FaTimes />
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Title */}
+            {/* Title Field */}
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Document Title *
+              <label htmlFor="title" className="block text-sm font-medium mb-2" style={{ color: '#1A1A1A' }}>
+                Document Title
               </label>
               <input
                 type="text"
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter document title"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                style={{ 
+                  borderColor: '#CFCFCF',
+                  backgroundColor: '#F9F7F1',
+                  color: '#1A1A1A'
+                }}
                 required
+                disabled={uploading}
               />
             </div>
 
-            {/* Description */}
+            {/* Description Field */}
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+              <label htmlFor="description" className="block text-sm font-medium mb-2" style={{ color: '#1A1A1A' }}>
+                Description (Optional)
               </label>
               <textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter document description (optional)"
+                placeholder="Enter document description"
+                rows={3}
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                style={{ 
+                  borderColor: '#CFCFCF',
+                  backgroundColor: '#F9F7F1',
+                  color: '#1A1A1A'
+                }}
+                disabled={uploading}
               />
             </div>
 
-            {/* Visibility */}
+            {/* Visibility Selection */}
             <div>
-              <label htmlFor="visibility" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: '#1A1A1A' }}>
                 Visibility
               </label>
               <select
-                id="visibility"
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value as 'resident' | 'admin' | 'public')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                style={{ 
+                  borderColor: '#CFCFCF',
+                  backgroundColor: '#F9F7F1',
+                  color: '#1A1A1A'
+                }}
+                disabled={uploading}
               >
                 <option value="resident">Residents Only</option>
                 <option value="admin">Admins Only</option>
                 <option value="public">Public Access</option>
               </select>
-              <p className="text-sm text-gray-500 mt-1">
-                {visibility === 'resident' && 'Only logged-in residents can view this document'}
-                {visibility === 'admin' && 'Only admins can view this document'}
-                {visibility === 'public' && 'Anyone can view this document'}
-              </p>
             </div>
-
-            {/* Upload Progress */}
-            {uploading && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <FaSpinner className="animate-spin text-blue-600" />
-                  <span className="font-medium text-blue-900">Uploading...</span>
-                  <span className="text-blue-700">{uploadProgress}%</span>
-                </div>
-                <div className="w-full bg-blue-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${uploadProgress}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                {error}
+              <div className="p-4 rounded-md" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444', border: '1px solid' }}>
+                <div className="flex">
+                  <FaTimes className="text-red-500 mt-0.5 mr-2" />
+                  <p style={{ color: '#ef4444' }}>{error}</p>
+                </div>
               </div>
             )}
 
             {/* Success Message */}
             {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                <FaCheck className="text-green-600" />
-                {success}
+              <div className="p-4 rounded-md" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', borderColor: '#38A169', border: '1px solid' }}>
+                <div className="flex">
+                  <FaCheck className="mt-0.5 mr-2" style={{ color: '#38A169' }} />
+                  <p style={{ color: '#38A169' }}>{success}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Upload Progress */}
+            {uploading && (
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>Uploading...</span>
+                  <span className="text-sm" style={{ color: '#1A1A1A' }}>{uploadProgress}%</span>
+                </div>
+                <div className="w-full rounded-full h-2" style={{ backgroundColor: '#CFCFCF' }}>
+                  <div 
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      backgroundColor: '#38A169',
+                      width: `${uploadProgress}%`
+                    }}
+                  ></div>
+                </div>
               </div>
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={!file || !title.trim() || uploading}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {uploading ? (
-                <>
-                  <FaSpinner className="animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <FaUpload />
-                  Upload Document
-                </>
-              )}
-            </button>
+            <div className="flex gap-4">
+              <button
+                type="submit"
+                disabled={!file || !title.trim() || uploading}
+                className="flex-1 py-2 px-4 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ 
+                  backgroundColor: '#38A169',
+                  color: 'white'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#CBA135';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#38A169';
+                  }
+                }}
+              >
+                {uploading ? (
+                  <span className="flex items-center justify-center">
+                    <FaSpinner className="animate-spin mr-2" />
+                    Uploading...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <FaUpload className="mr-2" />
+                    Upload Document
+                  </span>
+                )}
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => router.push('/admin/documents')}
+                disabled={uploading}
+                className="px-6 py-2 border rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{ 
+                  borderColor: '#CFCFCF',
+                  backgroundColor: '#F9F7F1',
+                  color: '#1A1A1A'
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#EDEDED';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.currentTarget.disabled) {
+                    e.currentTarget.style.backgroundColor = '#F9F7F1';
+                  }
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
       </div>

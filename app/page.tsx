@@ -42,30 +42,30 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-amber-50 to-emerald-50 relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#EDEDED' }}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-conic from-stone-200/20 to-emerald-200/20 rounded-full blur-3xl animate-spin-slow"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)' }}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl animate-pulse delay-1000" style={{ backgroundColor: 'rgba(203, 161, 53, 0.1)' }}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl animate-spin-slow" style={{ background: 'conic-gradient(from 0deg, rgba(207, 207, 207, 0.1), rgba(56, 161, 105, 0.1))' }}></div>
       </div>
 
       {/* Navigation */}
       <nav className="relative z-10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <FaBuilding className="text-3xl text-emerald-600" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-stone-700 bg-clip-text text-transparent">
+            <FaBuilding className="text-3xl" style={{ color: '#38A169' }} />
+            <span className="text-2xl font-bold" style={{ color: '#1A1A1A' }}>
               Sevara Apartments
             </span>
           </div>
-          <div className="hidden md:flex items-center space-x-6 text-stone-700">
+          <div className="hidden md:flex items-center space-x-6" style={{ color: '#1A1A1A' }}>
             <div className="flex items-center space-x-2">
-              <FaClock className="text-emerald-600" />
+              <FaClock style={{ color: '#38A169' }} />
               <span className="font-medium">{currentTime}</span>
             </div>
-            <a href="#services" className="hover:text-emerald-600 transition-colors duration-300">Services</a>
-            <a href="#contact" className="hover:text-emerald-600 transition-colors duration-300">Contact</a>
+            <a href="#services" className="hover:text-emerald-600 transition-colors duration-300" style={{ color: '#1A1A1A' }}>Services</a>
+            <a href="#contact" className="hover:text-emerald-600 transition-colors duration-300" style={{ color: '#1A1A1A' }}>Contact</a>
           </div>
         </div>
       </nav>
@@ -74,12 +74,10 @@ export default function Home() {
       <section className="relative z-10 px-6 pt-16 pb-20">
         <div className="max-w-7xl mx-auto">
           <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <h1 className="text-5xl md:text-7xl font-bold mb-8">
-              <span className="bg-gradient-to-r from-emerald-600 via-stone-600 to-amber-600 bg-clip-text text-transparent">
-                Welcome Back
-              </span>
+            <h1 className="text-5xl md:text-7xl font-bold mb-8" style={{ color: '#1A1A1A' }}>
+              Welcome Back
             </h1>
-            <p className="text-xl md:text-2xl text-stone-700 mb-16 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl mb-16 max-w-4xl mx-auto leading-relaxed" style={{ color: '#1A1A1A' }}>
               Access your resident portal to manage your apartment services, view community updates, 
               and connect with building management.
             </p>
@@ -87,8 +85,15 @@ export default function Home() {
             {/* Portal Access Buttons */}
             <div className="flex flex-col md:flex-row gap-8 justify-center items-center mb-20">
               <Link 
-                href="/login"
-                className="group relative px-12 py-8 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl font-bold text-2xl shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
+                href="/resident/login"
+                className="group relative px-12 py-8 text-white rounded-2xl font-bold text-2xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
+                style={{ backgroundColor: '#38A169' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#CBA135';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#38A169';
+                }}
               >
                 <div className="flex flex-col items-center space-y-3">
                   <FaUser className="text-5xl" />
@@ -100,7 +105,14 @@ export default function Home() {
               
               <Link 
                 href="/admin/login"
-                className="group relative px-12 py-8 bg-gradient-to-r from-stone-600 to-amber-600 text-white rounded-2xl font-bold text-2xl shadow-2xl hover:shadow-stone-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
+                className="group relative px-12 py-8 text-white rounded-2xl font-bold text-2xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
+                style={{ backgroundColor: '#CBA135' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#38A169';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#CBA135';
+                }}
               >
                 <div className="flex flex-col items-center space-y-3">
                   <FaUserShield className="text-5xl" />
@@ -118,10 +130,10 @@ export default function Home() {
       <section id="services" className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-stone-800 mb-4">
+            <h2 className="text-4xl font-bold mb-4" style={{ color: '#1A1A1A' }}>
               Quick Access
             </h2>
-            <p className="text-xl text-stone-700">
+            <p className="text-xl" style={{ color: '#1A1A1A' }}>
               Common services and information for residents
             </p>
           </div>
@@ -130,15 +142,27 @@ export default function Home() {
             {quickAccess.map((item, index) => (
               <div 
                 key={index}
-                className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 border border-stone-200 transition-all duration-300 transform hover:scale-105 hover:bg-white/90 shadow-lg"
+                className="rounded-2xl p-8 border transition-all duration-300 transform hover:scale-105 shadow-lg"
+                style={{ 
+                  backgroundColor: '#F9F7F1',
+                  borderColor: '#CFCFCF'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#CBA135';
+                  e.currentTarget.style.backgroundColor = '#EDEDED';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#CFCFCF';
+                  e.currentTarget.style.backgroundColor = '#F9F7F1';
+                }}
               >
-                <div className="text-emerald-600 mb-6 text-center">
+                <div className="mb-6 text-center" style={{ color: '#38A169' }}>
                   {item.icon}
                 </div>
-                <h3 className="text-xl font-bold text-stone-800 mb-4 text-center">
+                <h3 className="text-xl font-bold mb-4 text-center" style={{ color: '#1A1A1A' }}>
                   {item.title}
                 </h3>
-                <p className="text-stone-700 leading-relaxed text-center">
+                <p className="leading-relaxed text-center" style={{ color: '#1A1A1A' }}>
                   {item.description}
                 </p>
               </div>
@@ -150,13 +174,13 @@ export default function Home() {
       {/* Building Amenities */}
       <section className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-12 border border-stone-200 shadow-xl">
+          <div className="rounded-3xl p-12 border shadow-xl" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl font-bold text-stone-800 mb-6">
+                <h2 className="text-4xl font-bold mb-6" style={{ color: '#1A1A1A' }}>
                   Building Amenities
                 </h2>
-                <p className="text-xl text-stone-700 mb-8">
+                <p className="text-xl mb-8" style={{ color: '#1A1A1A' }}>
                   Available facilities for all residents
                 </p>
                 
@@ -167,8 +191,8 @@ export default function Home() {
                     "24/7 Concierge Service"
                   ].map((amenity, index) => (
                     <div key={index} className="flex items-center space-x-3">
-                      <FaCheck className="text-emerald-600" />
-                      <span className="text-stone-800 font-medium text-lg">{amenity}</span>
+                      <FaCheck style={{ color: '#38A169' }} />
+                      <span className="font-medium text-lg" style={{ color: '#1A1A1A' }}>{amenity}</span>
                     </div>
                   ))}
                 </div>
@@ -177,23 +201,23 @@ export default function Home() {
               <div className="relative">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-br from-emerald-100 to-teal-100 backdrop-blur-lg rounded-2xl p-6 border border-emerald-200">
-                      <FaLeaf className="text-3xl text-emerald-600 mb-3" />
-                      <h4 className="text-stone-800 font-semibold">Pool Access</h4>
+                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', borderColor: '#38A169' }}>
+                      <FaLeaf className="text-3xl mb-3" style={{ color: '#38A169' }} />
+                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Pool Access</h4>
                     </div>
-                    <div className="bg-gradient-to-br from-stone-100 to-amber-100 backdrop-blur-lg rounded-2xl p-6 border border-stone-200">
-                      <FaStar className="text-3xl text-amber-600 mb-3" />
-                      <h4 className="text-stone-800 font-semibold">Concierge</h4>
+                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(203, 161, 53, 0.1)', borderColor: '#CBA135' }}>
+                      <FaStar className="text-3xl mb-3" style={{ color: '#CBA135' }} />
+                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Concierge</h4>
                     </div>
                   </div>
                   <div className="space-y-4 mt-8">
-                    <div className="bg-gradient-to-br from-teal-100 to-emerald-100 backdrop-blur-lg rounded-2xl p-6 border border-teal-200">
-                      <FaBuilding className="text-3xl text-teal-600 mb-3" />
-                      <h4 className="text-stone-800 font-semibold">Fitness Center</h4>
+                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', borderColor: '#38A169' }}>
+                      <FaBuilding className="text-3xl mb-3" style={{ color: '#38A169' }} />
+                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Fitness Center</h4>
                     </div>
-                    <div className="bg-gradient-to-br from-amber-100 to-stone-100 backdrop-blur-lg rounded-2xl p-6 border border-amber-200">
-                      <FaShieldAlt className="text-3xl text-stone-600 mb-3" />
-                      <h4 className="text-stone-800 font-semibold">Security</h4>
+                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(207, 207, 207, 0.2)', borderColor: '#CFCFCF' }}>
+                      <FaShieldAlt className="text-3xl mb-3" style={{ color: '#CFCFCF' }} />
+                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Security</h4>
                     </div>
                   </div>
                 </div>
@@ -206,46 +230,46 @@ export default function Home() {
       {/* Contact Section */}
       <section id="contact" className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-stone-800 mb-6">
+          <h2 className="text-4xl font-bold mb-6" style={{ color: '#1A1A1A' }}>
             Building Contact Information
           </h2>
-          <p className="text-xl text-stone-700 mb-12 max-w-3xl mx-auto">
+          <p className="text-xl mb-12 max-w-3xl mx-auto" style={{ color: '#1A1A1A' }}>
             Need assistance? Contact our building management team or concierge service.
           </p>
           
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-stone-200 shadow-lg">
-              <FaPhone className="text-3xl text-emerald-600 mx-auto mb-4" />
-              <h4 className="text-stone-800 font-semibold mb-2">Emergency & Concierge</h4>
-              <p className="text-stone-700 text-lg font-medium">0400 000 000</p>
+            <div className="rounded-2xl p-6 border shadow-lg" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
+              <FaPhone className="text-3xl mx-auto mb-4" style={{ color: '#38A169' }} />
+              <h4 className="font-semibold mb-2" style={{ color: '#1A1A1A' }}>Emergency & Concierge</h4>
+              <p className="text-lg font-medium" style={{ color: '#1A1A1A' }}>0400 000 000</p>
             </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-stone-200 shadow-lg">
-              <FaEnvelope className="text-3xl text-teal-600 mx-auto mb-4" />
-              <h4 className="text-stone-800 font-semibold mb-2">Building Management</h4>
-              <p className="text-stone-700">info@sevara.apartments</p>
+            <div className="rounded-2xl p-6 border shadow-lg" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
+              <FaEnvelope className="text-3xl mx-auto mb-4" style={{ color: '#38A169' }} />
+              <h4 className="font-semibold mb-2" style={{ color: '#1A1A1A' }}>Building Management</h4>
+              <p style={{ color: '#1A1A1A' }}>info@sevara.apartments</p>
             </div>
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-stone-200 shadow-lg">
-              <FaMapMarkerAlt className="text-3xl text-amber-600 mx-auto mb-4" />
-              <h4 className="text-stone-800 font-semibold mb-2">Location</h4>
-              <p className="text-stone-700">Pyrmont, Sydney NSW</p>
+            <div className="rounded-2xl p-6 border shadow-lg" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
+              <FaMapMarkerAlt className="text-3xl mx-auto mb-4" style={{ color: '#CBA135' }} />
+              <h4 className="font-semibold mb-2" style={{ color: '#1A1A1A' }}>Location</h4>
+              <p style={{ color: '#1A1A1A' }}>Pyrmont, Sydney NSW</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-12 border-t border-stone-200 bg-white/50 backdrop-blur-lg">
+      <footer className="relative z-10 px-6 py-12 border-t" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-6">
-            <FaBuilding className="text-2xl text-emerald-600" />
-            <span className="text-xl font-bold bg-gradient-to-r from-emerald-700 to-stone-700 bg-clip-text text-transparent">
+            <FaBuilding className="text-2xl" style={{ color: '#38A169' }} />
+            <span className="text-xl font-bold" style={{ color: '#1A1A1A' }}>
               Sevara Apartments
             </span>
           </div>
-          <p className="text-stone-600 mb-6">
+          <p className="mb-6" style={{ color: '#CFCFCF' }}>
             © 2025 Sevara Apartments. All rights reserved. Resident portal and building management system.
           </p>
-          <div className="flex justify-center space-x-6 text-stone-600">
+          <div className="flex justify-center space-x-6" style={{ color: '#CFCFCF' }}>
             <Link href="/privacy-policy" className="hover:text-emerald-600 transition-colors">Privacy Policy</Link>
             <Link href="/terms-of-service" className="hover:text-emerald-600 transition-colors">Terms of Service</Link>
             <Link href="/cookie-policy" className="hover:text-emerald-600 transition-colors">Cookie Policy</Link>

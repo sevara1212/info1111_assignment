@@ -179,17 +179,17 @@ export default function DocumentsPage() {
   };
 
   const getFileIcon = (fileType: string) => {
-    if (fileType.includes('pdf')) return <FaFilePdf className="text-red-500 text-2xl" />;
-    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord className="text-blue-500 text-2xl" />;
-    if (fileType.includes('image')) return <FaImage className="text-green-500 text-2xl" />;
-    return <FaFile className="text-gray-500 text-2xl" />;
+    if (fileType.includes('pdf')) return <FaFilePdf className="text-2xl" style={{ color: '#e53e3e' }} />;
+    if (fileType.includes('word') || fileType.includes('document')) return <FaFileWord className="text-2xl" style={{ color: '#38A169' }} />;
+    if (fileType.includes('image')) return <FaImage className="text-2xl" style={{ color: '#CBA135' }} />;
+    return <FaFile className="text-2xl" style={{ color: '#CFCFCF' }} />;
   };
 
   const getVisibilityIcon = (visibility: string) => {
     switch (visibility) {
-      case 'resident': return <FaUsers className="text-blue-500" />;
-      case 'public': return <FaGlobe className="text-green-500" />;
-      default: return <FaUsers className="text-gray-500" />;
+      case 'resident': return <FaUsers style={{ color: '#38A169' }} />;
+      case 'public': return <FaGlobe style={{ color: '#CBA135' }} />;
+      default: return <FaUsers style={{ color: '#CFCFCF' }} />;
     }
   };
 
@@ -203,10 +203,10 @@ export default function DocumentsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
-          <p className="text-gray-600">Please log in to view documents.</p>
+          <FaSpinner className="animate-spin text-4xl mx-auto mb-4" style={{ color: '#38A169' }} />
+          <p style={{ color: '#1A1A1A' }}>Please log in to view documents</p>
         </div>
       </div>
     );
@@ -214,24 +214,21 @@ export default function DocumentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDEDED' }}>
         <div className="text-center">
-          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading documents...</p>
-          {user && !userData && (
-            <p className="text-sm text-gray-500 mt-2">Loading user data...</p>
-          )}
+          <FaSpinner className="animate-spin text-4xl mx-auto mb-4" style={{ color: '#38A169' }} />
+          <p style={{ color: '#1A1A1A' }}>Loading documents...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8" style={{ backgroundColor: '#EDEDED' }}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600 mt-2">Access important documents and resources</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#1A1A1A' }}>Documents</h1>
+          <p style={{ color: '#1A1A1A' }}>Access important documents and resources</p>
           
           {/* Debug info for troubleshooting */}
           {process.env.NODE_ENV === 'development' && (
@@ -242,25 +239,35 @@ export default function DocumentsPage() {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="mb-6 p-4 rounded-lg shadow-lg" style={{ backgroundColor: '#F9F7F1' }}>
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch className="absolute left-3 top-3 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search documents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  style={{ 
+                    borderColor: '#CFCFCF',
+                    backgroundColor: '#F9F7F1',
+                    color: '#1A1A1A'
+                  }}
                 />
               </div>
             </div>
-            <div className="md:w-48">
+            <div className="sm:w-48">
               <select
                 value={selectedVisibility}
                 onChange={(e) => setSelectedVisibility(e.target.value as 'all' | 'resident' | 'public')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                style={{ 
+                  borderColor: '#CFCFCF',
+                  backgroundColor: '#F9F7F1',
+                  color: '#1A1A1A'
+                }}
               >
                 <option value="all">All Documents</option>
                 <option value="resident">Residents Only</option>
@@ -268,109 +275,157 @@ export default function DocumentsPage() {
               </select>
             </div>
           </div>
-          
-          {/* Retry button if there's an error */}
-          {error && (
-            <div className="mt-4">
-              <button
-                onClick={() => {
-                  setLoading(true);
-                  setError('');
-                  fetchDocuments();
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Retry Loading
-              </button>
-            </div>
-          )}
         </div>
 
+        {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            <div className="flex items-center gap-2">
-              <FaExclamationTriangle className="text-red-600" />
-              <div>
-                <span className="font-medium">Error:</span>
-                <span className="ml-2">{error}</span>
+          <div className="mb-6 p-4 rounded-lg border" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444' }}>
+            <div className="flex items-start">
+              <FaExclamationTriangle className="text-red-500 mt-1 mr-3 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-medium text-red-800 mb-1">Error Loading Documents</h3>
+                <p className="text-red-700 text-sm">{error}</p>
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    setError('');
+                    fetchDocuments();
+                  }}
+                  className="mt-3 px-3 py-1 text-sm font-medium rounded transition-colors"
+                  style={{ 
+                    backgroundColor: '#38A169',
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#CBA135';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#38A169';
+                  }}
+                >
+                  Try Again
+                </button>
               </div>
             </div>
           </div>
         )}
 
         {/* Documents Grid */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {filteredDocuments.length === 0 && !error ? (
-            <div className="text-center py-12">
-              <FaFile className="text-6xl text-gray-300 mx-auto mb-4" />
-              <h3 className="text-xl font-medium text-gray-900 mb-2">
-                {searchTerm || selectedVisibility !== 'all' ? 'No documents found' : 'No documents available'}
-              </h3>
-              <p className="text-gray-600">
-                {searchTerm || selectedVisibility !== 'all' 
-                  ? 'Try adjusting your search or filter criteria'
-                  : 'Documents will appear here when they are uploaded by administrators'
-                }
-              </p>
-            </div>
-          ) : filteredDocuments.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {filteredDocuments.map((document) => (
-                <div key={document.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex-shrink-0">
-                      {getFileIcon(document.fileType)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-gray-900 mb-1 truncate">
-                        {document.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                        {document.description || 'No description available'}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+        {filteredDocuments.length === 0 && !loading && !error ? (
+          <div className="text-center py-12 rounded-lg" style={{ backgroundColor: '#F9F7F1' }}>
+            <FaFile className="text-6xl mx-auto mb-4" style={{ color: '#CFCFCF' }} />
+            <h3 className="text-xl font-medium mb-2" style={{ color: '#1A1A1A' }}>
+              {searchTerm || selectedVisibility !== 'all' ? 'No matching documents' : 'No documents available'}
+            </h3>
+            <p style={{ color: '#CFCFCF' }}>
+              {searchTerm || selectedVisibility !== 'all' 
+                ? 'Try adjusting your search or filter criteria'
+                : 'Documents will appear here when they are uploaded'
+              }
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredDocuments.map((document) => (
+              <div
+                key={document.id}
+                className="rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-200 border"
+                style={{ 
+                  backgroundColor: '#F9F7F1',
+                  borderColor: '#CFCFCF'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#CBA135';
+                  e.currentTarget.style.backgroundColor = '#EDEDED';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#CFCFCF';
+                  e.currentTarget.style.backgroundColor = '#F9F7F1';
+                }}
+              >
+                {/* File Icon and Title */}
+                <div className="flex items-start mb-4">
+                  <div className="flex-shrink-0 mr-3">
+                    {getFileIcon(document.fileType)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-medium mb-1 truncate" style={{ color: '#1A1A1A' }}>
+                      {document.title}
+                    </h3>
+                    <div className="flex items-center text-sm" style={{ color: '#CFCFCF' }}>
+                      <div className="mr-2">
                         {getVisibilityIcon(document.visibility)}
-                        <span>{getVisibilityLabel(document.visibility)}</span>
                       </div>
+                      <span>{getVisibilityLabel(document.visibility)}</span>
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span>{formatFileSize(document.fileSize)}</span>
-                    <span>{document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}</span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <a
-                      href={document.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <FaEye />
-                      View
-                    </a>
-                    <a
-                      href={document.fileUrl}
-                      download={document.fileName}
-                      className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <FaDownload />
-                      Download
-                    </a>
-                  </div>
-
-                  <div className="mt-3 text-xs text-gray-400 text-center">
-                    Uploaded by {document.uploaderName}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
 
+                {/* Description */}
+                {document.description && (
+                  <p className="text-sm mb-4 line-clamp-3" style={{ color: '#1A1A1A' }}>
+                    {document.description}
+                  </p>
+                )}
+
+                {/* Document Info */}
+                <div className="text-xs mb-4 space-y-1" style={{ color: '#CFCFCF' }}>
+                  <div>Size: {formatFileSize(document.fileSize)}</div>
+                  <div>
+                    Uploaded: {document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                  </div>
+                  <div>By: {document.uploaderName}</div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => window.open(document.fileUrl, '_blank')}
+                    className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                    style={{ 
+                      backgroundColor: '#38A169',
+                      color: 'white'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#CBA135';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#38A169';
+                    }}
+                  >
+                    <FaEye className="mr-1" />
+                    View
+                  </button>
+                  <a
+                    href={document.fileUrl}
+                    download
+                    className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors border focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    style={{ 
+                      borderColor: '#CFCFCF',
+                      backgroundColor: '#F9F7F1',
+                      color: '#1A1A1A'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#EDEDED';
+                      e.currentTarget.style.borderColor = '#CBA135';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#F9F7F1';
+                      e.currentTarget.style.borderColor = '#CFCFCF';
+                    }}
+                  >
+                    <FaDownload className="mr-1" />
+                    Download
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Results Summary */}
         {filteredDocuments.length > 0 && (
-          <div className="mt-6 text-center text-sm text-gray-500">
+          <div className="mt-8 text-center text-sm" style={{ color: '#CFCFCF' }}>
             Showing {filteredDocuments.length} of {documents.length} document{documents.length !== 1 ? 's' : ''}
           </div>
         )}
