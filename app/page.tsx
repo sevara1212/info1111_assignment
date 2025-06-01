@@ -42,30 +42,30 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: '#EDEDED' }}>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)' }}></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl animate-pulse delay-1000" style={{ backgroundColor: 'rgba(203, 161, 53, 0.1)' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl animate-spin-slow" style={{ background: 'conic-gradient(from 0deg, rgba(207, 207, 207, 0.1), rgba(56, 161, 105, 0.1))' }}></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-slate-100/40 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl animate-spin-slow" style={{ background: 'conic-gradient(from 0deg, rgba(59, 130, 246, 0.08), rgba(148, 163, 184, 0.08))' }}></div>
       </div>
 
       {/* Navigation */}
       <nav className="relative z-10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <FaBuilding className="text-3xl" style={{ color: '#38A169' }} />
-            <span className="text-2xl font-bold" style={{ color: '#1A1A1A' }}>
+            <FaBuilding className="text-3xl text-blue-600" />
+            <span className="text-2xl font-bold text-slate-800">
               Sevara Apartments
             </span>
           </div>
-          <div className="hidden md:flex items-center space-x-6" style={{ color: '#1A1A1A' }}>
+          <div className="hidden md:flex items-center space-x-6 text-slate-600">
             <div className="flex items-center space-x-2">
-              <FaClock style={{ color: '#38A169' }} />
+              <FaClock className="text-blue-600" />
               <span className="font-medium">{currentTime}</span>
             </div>
-            <a href="#services" className="hover:text-emerald-600 transition-colors duration-300" style={{ color: '#1A1A1A' }}>Services</a>
-            <a href="#contact" className="hover:text-emerald-600 transition-colors duration-300" style={{ color: '#1A1A1A' }}>Contact</a>
+            <a href="#services" className="hover:text-blue-600 transition-colors duration-300">Services</a>
+            <a href="#contact" className="hover:text-blue-600 transition-colors duration-300">Contact</a>
           </div>
         </div>
       </nav>
@@ -74,10 +74,10 @@ export default function Home() {
       <section className="relative z-10 px-6 pt-16 pb-20">
         <div className="max-w-7xl mx-auto">
           <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <h1 className="text-5xl md:text-7xl font-bold mb-8" style={{ color: '#1A1A1A' }}>
+            <h1 className="text-5xl md:text-7xl font-bold mb-8 text-slate-800">
               Welcome Back
             </h1>
-            <p className="text-xl md:text-2xl mb-16 max-w-4xl mx-auto leading-relaxed" style={{ color: '#1A1A1A' }}>
+            <p className="text-xl md:text-2xl mb-16 max-w-4xl mx-auto leading-relaxed text-slate-600">
               Access your resident portal to manage your apartment services, view community updates, 
               and connect with building management.
             </p>
@@ -86,14 +86,7 @@ export default function Home() {
             <div className="flex flex-col md:flex-row gap-8 justify-center items-center mb-20">
               <Link 
                 href="/resident/login"
-                className="group relative px-12 py-8 text-white rounded-2xl font-bold text-2xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
-                style={{ backgroundColor: '#38A169' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#CBA135';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#38A169';
-                }}
+                className="group relative px-12 py-8 text-white rounded-2xl font-bold text-2xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px] bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
               >
                 <div className="flex flex-col items-center space-y-3">
                   <FaUser className="text-5xl" />
@@ -105,14 +98,7 @@ export default function Home() {
               
               <Link 
                 href="/admin/login"
-                className="group relative px-12 py-8 text-white rounded-2xl font-bold text-2xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
-                style={{ backgroundColor: '#CBA135' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#38A169';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#CBA135';
-                }}
+                className="group relative px-12 py-8 text-white rounded-2xl font-bold text-2xl shadow-2xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px] bg-gradient-to-br from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800"
               >
                 <div className="flex flex-col items-center space-y-3">
                   <FaUserShield className="text-5xl" />
@@ -130,10 +116,10 @@ export default function Home() {
       <section id="services" className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4" style={{ color: '#1A1A1A' }}>
+            <h2 className="text-4xl font-bold mb-4 text-slate-800">
               Quick Access
             </h2>
-            <p className="text-xl" style={{ color: '#1A1A1A' }}>
+            <p className="text-xl text-slate-600">
               Common services and information for residents
             </p>
           </div>
@@ -142,27 +128,15 @@ export default function Home() {
             {quickAccess.map((item, index) => (
               <div 
                 key={index}
-                className="rounded-2xl p-8 border transition-all duration-300 transform hover:scale-105 shadow-lg"
-                style={{ 
-                  backgroundColor: '#F9F7F1',
-                  borderColor: '#CFCFCF'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#CBA135';
-                  e.currentTarget.style.backgroundColor = '#EDEDED';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#CFCFCF';
-                  e.currentTarget.style.backgroundColor = '#F9F7F1';
-                }}
+                className="rounded-2xl p-8 border transition-all duration-300 transform hover:scale-105 shadow-lg bg-white/80 backdrop-blur-xl border-slate-200 hover:bg-white hover:shadow-xl hover:border-blue-200"
               >
-                <div className="mb-6 text-center" style={{ color: '#38A169' }}>
+                <div className="mb-6 text-center text-blue-600">
                   {item.icon}
                 </div>
-                <h3 className="text-xl font-bold mb-4 text-center" style={{ color: '#1A1A1A' }}>
+                <h3 className="text-xl font-bold mb-4 text-center text-slate-800">
                   {item.title}
                 </h3>
-                <p className="leading-relaxed text-center" style={{ color: '#1A1A1A' }}>
+                <p className="leading-relaxed text-center text-slate-600">
                   {item.description}
                 </p>
               </div>
@@ -174,13 +148,13 @@ export default function Home() {
       {/* Building Amenities */}
       <section className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="rounded-3xl p-12 border shadow-xl" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
+          <div className="rounded-3xl p-12 border shadow-xl bg-white/80 backdrop-blur-xl border-slate-200">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl font-bold mb-6" style={{ color: '#1A1A1A' }}>
+                <h2 className="text-4xl font-bold mb-6 text-slate-800">
                   Building Amenities
                 </h2>
-                <p className="text-xl mb-8" style={{ color: '#1A1A1A' }}>
+                <p className="text-xl mb-8 text-slate-600">
                   Available facilities for all residents
                 </p>
                 
@@ -191,8 +165,8 @@ export default function Home() {
                     "24/7 Concierge Service"
                   ].map((amenity, index) => (
                     <div key={index} className="flex items-center space-x-3">
-                      <FaCheck style={{ color: '#38A169' }} />
-                      <span className="font-medium text-lg" style={{ color: '#1A1A1A' }}>{amenity}</span>
+                      <FaCheck className="text-blue-600" />
+                      <span className="font-medium text-lg text-slate-800">{amenity}</span>
                     </div>
                   ))}
                 </div>
@@ -201,23 +175,23 @@ export default function Home() {
               <div className="relative">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-4">
-                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', borderColor: '#38A169' }}>
-                      <FaLeaf className="text-3xl mb-3" style={{ color: '#38A169' }} />
-                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Pool Access</h4>
+                    <div className="rounded-2xl p-6 border bg-blue-50 border-blue-200">
+                      <FaLeaf className="text-3xl mb-3 text-blue-600" />
+                      <h4 className="font-semibold text-slate-800">Pool Access</h4>
                     </div>
-                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(203, 161, 53, 0.1)', borderColor: '#CBA135' }}>
-                      <FaStar className="text-3xl mb-3" style={{ color: '#CBA135' }} />
-                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Concierge</h4>
+                    <div className="rounded-2xl p-6 border bg-slate-50 border-slate-200">
+                      <FaStar className="text-3xl mb-3 text-slate-600" />
+                      <h4 className="font-semibold text-slate-800">Concierge</h4>
                     </div>
                   </div>
                   <div className="space-y-4 mt-8">
-                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', borderColor: '#38A169' }}>
-                      <FaBuilding className="text-3xl mb-3" style={{ color: '#38A169' }} />
-                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Fitness Center</h4>
+                    <div className="rounded-2xl p-6 border bg-blue-50 border-blue-200">
+                      <FaBuilding className="text-3xl mb-3 text-blue-600" />
+                      <h4 className="font-semibold text-slate-800">Fitness Center</h4>
                     </div>
-                    <div className="rounded-2xl p-6 border" style={{ backgroundColor: 'rgba(207, 207, 207, 0.2)', borderColor: '#CFCFCF' }}>
-                      <FaShieldAlt className="text-3xl mb-3" style={{ color: '#CFCFCF' }} />
-                      <h4 className="font-semibold" style={{ color: '#1A1A1A' }}>Security</h4>
+                    <div className="rounded-2xl p-6 border bg-slate-50 border-slate-200">
+                      <FaShieldAlt className="text-3xl mb-3 text-slate-600" />
+                      <h4 className="font-semibold text-slate-800">Security</h4>
                     </div>
                   </div>
                 </div>
@@ -230,49 +204,49 @@ export default function Home() {
       {/* Contact Section */}
       <section id="contact" className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6" style={{ color: '#1A1A1A' }}>
+          <h2 className="text-4xl font-bold mb-6 text-slate-800">
             Building Contact Information
           </h2>
-          <p className="text-xl mb-12 max-w-3xl mx-auto" style={{ color: '#1A1A1A' }}>
+          <p className="text-xl mb-12 max-w-3xl mx-auto text-slate-600">
             Need assistance? Contact our building management team or concierge service.
           </p>
           
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="rounded-2xl p-6 border shadow-lg" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
-              <FaPhone className="text-3xl mx-auto mb-4" style={{ color: '#38A169' }} />
-              <h4 className="font-semibold mb-2" style={{ color: '#1A1A1A' }}>Emergency & Concierge</h4>
-              <p className="text-lg font-medium" style={{ color: '#1A1A1A' }}>0400 000 000</p>
+            <div className="rounded-2xl p-6 border shadow-lg bg-white/90 backdrop-blur-xl border-slate-200 hover:border-blue-200 transition-colors">
+              <FaPhone className="text-3xl mx-auto mb-4 text-blue-600" />
+              <h4 className="font-semibold mb-2 text-slate-800">Emergency & Concierge</h4>
+              <p className="text-lg font-medium text-slate-600">0400 000 000</p>
             </div>
-            <div className="rounded-2xl p-6 border shadow-lg" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
-              <FaEnvelope className="text-3xl mx-auto mb-4" style={{ color: '#38A169' }} />
-              <h4 className="font-semibold mb-2" style={{ color: '#1A1A1A' }}>Building Management</h4>
-              <p style={{ color: '#1A1A1A' }}>info@sevara.apartments</p>
+            <div className="rounded-2xl p-6 border shadow-lg bg-white/90 backdrop-blur-xl border-slate-200 hover:border-blue-200 transition-colors">
+              <FaEnvelope className="text-3xl mx-auto mb-4 text-blue-600" />
+              <h4 className="font-semibold mb-2 text-slate-800">Building Management</h4>
+              <p className="text-slate-600">info@sevara.apartments</p>
             </div>
-            <div className="rounded-2xl p-6 border shadow-lg" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
-              <FaMapMarkerAlt className="text-3xl mx-auto mb-4" style={{ color: '#CBA135' }} />
-              <h4 className="font-semibold mb-2" style={{ color: '#1A1A1A' }}>Location</h4>
-              <p style={{ color: '#1A1A1A' }}>Pyrmont, Sydney NSW</p>
+            <div className="rounded-2xl p-6 border shadow-lg bg-white/90 backdrop-blur-xl border-slate-200 hover:border-blue-200 transition-colors">
+              <FaMapMarkerAlt className="text-3xl mx-auto mb-4 text-slate-600" />
+              <h4 className="font-semibold mb-2 text-slate-800">Location</h4>
+              <p className="text-slate-600">Pyrmont, Sydney NSW</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-12 border-t" style={{ backgroundColor: '#F9F7F1', borderColor: '#CFCFCF' }}>
+      <footer className="relative z-10 px-6 py-12 border-t bg-white/90 backdrop-blur-xl border-slate-200">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-6">
-            <FaBuilding className="text-2xl" style={{ color: '#38A169' }} />
-            <span className="text-xl font-bold" style={{ color: '#1A1A1A' }}>
+            <FaBuilding className="text-2xl text-blue-600" />
+            <span className="text-xl font-bold text-slate-800">
               Sevara Apartments
             </span>
           </div>
-          <p className="mb-6" style={{ color: '#CFCFCF' }}>
+          <p className="mb-6 text-slate-600">
             © 2025 Sevara Apartments. All rights reserved. Resident portal and building management system.
           </p>
-          <div className="flex justify-center space-x-6" style={{ color: '#CFCFCF' }}>
-            <Link href="/privacy-policy" className="hover:text-emerald-600 transition-colors">Privacy Policy</Link>
-            <Link href="/terms-of-service" className="hover:text-emerald-600 transition-colors">Terms of Service</Link>
-            <Link href="/cookie-policy" className="hover:text-emerald-600 transition-colors">Cookie Policy</Link>
+          <div className="flex justify-center space-x-6 text-slate-600">
+            <Link href="/privacy-policy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:text-blue-600 transition-colors">Terms of Service</Link>
+            <Link href="/cookie-policy" className="hover:text-blue-600 transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </footer>

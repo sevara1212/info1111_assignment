@@ -377,6 +377,79 @@ export default function AdminAnalyticsPage() {
           />
         </div>
 
+        {/* Data Export Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Feedback Export */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-blue-100">
+                <FaEnvelope className="text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Feedback Export</h3>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">
+              Download all contact form submissions and feedback from Firestore as a CSV file for analysis and reporting.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Total Messages:</span>
+                <span className="font-medium">{analytics.messages.total}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Unread Messages:</span>
+                <span className="font-medium text-red-600">{analytics.messages.unread}</span>
+              </div>
+            </div>
+            <div className="mt-6">
+              <a
+                href="http://export-feedback.ibragimovasevar.replit.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-full justify-center font-medium"
+              >
+                <FaFileAlt className="text-sm" />
+                Download CSV Export
+              </a>
+            </div>
+          </div>
+
+          {/* System Status */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-green-100">
+                <FaCheckCircle className="text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">System Status</h3>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">
+              Current status of all building management systems and services.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Database</span>
+                <span className="flex items-center gap-2 text-green-600 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Online
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">User Portal</span>
+                <span className="flex items-center gap-2 text-green-600 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Operational
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Notifications</span>
+                <span className="flex items-center gap-2 text-green-600 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  Active
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Detailed Breakdowns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Maintenance Status */}

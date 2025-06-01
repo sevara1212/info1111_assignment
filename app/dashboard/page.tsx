@@ -219,7 +219,7 @@ export default function Dashboard() {
         <div className="relative">
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-4 bg-gradient-to-br from-emerald-500 to-teal-500 text-white rounded-full hover:from-emerald-600 hover:to-teal-600 transition shadow-xl relative backdrop-blur-xl"
+            className="p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full hover:from-blue-600 hover:to-blue-700 transition shadow-xl relative backdrop-blur-xl"
           >
             <FaBell className="text-xl" />
             {notifications.length > 0 && (
@@ -287,36 +287,36 @@ export default function Dashboard() {
         {/* Sidebar */}
         <aside className="w-80 bg-white/30 backdrop-blur-xl border-r border-stone-200/50 shadow-xl flex flex-col py-8 min-h-screen">
           <div className="mb-8 flex flex-col items-center px-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-4xl text-white mb-4 shadow-lg">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-4xl text-white mb-4 shadow-lg">
               {userData?.name?.charAt(0) || 'R'}
             </div>
             <div className="font-bold text-xl text-stone-800">{userData?.name}</div>
             <div className="text-sm text-stone-600 mb-2">{userData?.email}</div>
-            <div className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+            <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
               Resident
             </div>
           </div>
           
           <nav className="flex flex-col gap-2 px-4 flex-1">
-            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-100 text-emerald-700 font-medium text-base border border-emerald-200 shadow-sm">
-              <FaHome className="text-emerald-600" /> Dashboard
+            <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-100 text-blue-700 font-medium text-base border border-blue-200 shadow-sm">
+              <FaHome className="text-blue-600" /> Dashboard
             </Link>
-            <Link href="/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+            <Link href="/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-blue-700 font-medium text-base border border-stone-200/50 hover:border-blue-200 transition-all duration-200">
               <FaTools className="text-stone-600" /> Maintenance
             </Link>
-            <Link href="/book-lift" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+            <Link href="/book-lift" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-blue-700 font-medium text-base border border-stone-200/50 hover:border-blue-200 transition-all duration-200">
               <FaClipboardCheck className="text-stone-600" /> Book Lift
             </Link>
-            <Link href="/amenities" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+            <Link href="/amenities" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-blue-700 font-medium text-base border border-stone-200/50 hover:border-blue-200 transition-all duration-200">
               <FaSwimmingPool className="text-stone-600" /> Amenities
             </Link>
-            <Link href="/documents" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+            <Link href="/documents" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-blue-700 font-medium text-base border border-stone-200/50 hover:border-blue-200 transition-all duration-200">
               <FaFileAlt className="text-stone-600" /> Documents
             </Link>
-            <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+            <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-blue-700 font-medium text-base border border-stone-200/50 hover:border-blue-200 transition-all duration-200">
               <FaDownload className="text-stone-600" /> Downloads
             </Link>
-            <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+            <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-blue-700 font-medium text-base border border-stone-200/50 hover:border-blue-200 transition-all duration-200">
               <FaPhone className="text-stone-600" /> Contact
             </Link>
           </nav>
