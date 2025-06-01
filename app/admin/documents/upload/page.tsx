@@ -102,9 +102,22 @@ export default function AdminDocumentUploadPage() {
     setUploadProgress(0);
 
     try {
+      console.log('=== UPLOAD DEBUG START ===');
       console.log('Starting upload process...');
       console.log('User:', user?.email);
+      console.log('User authenticated:', !!user);
       console.log('File:', file.name, file.size, file.type);
+
+      // Test Firebase Auth
+      if (user) {
+        try {
+          const token = await user.getIdToken();
+          console.log('Auth token exists:', !!token);
+          console.log('Token length:', token.length);
+        } catch (tokenError) {
+          console.error('Failed to get auth token:', tokenError);
+        }
+      }
 
       // Create a unique filename
       const timestamp = Date.now();
@@ -113,34 +126,59 @@ export default function AdminDocumentUploadPage() {
       
       console.log('Generated filename:', fileName);
 
-      // Upload file to Firebase Storage with progress tracking
+      // Test storage reference creation
+      console.log('Creating storage reference...');
       const fileRef = ref(storage, `documents/${fileName}`);
       console.log('Storage reference created:', fileRef.fullPath);
+      console.log('Storage bucket:', fileRef.bucket);
       
+      // Test uploadBytesResumable creation
+      console.log('Creating upload task...');
       const uploadTask = uploadBytesResumable(fileRef, file);
-      console.log('Upload task created');
+      console.log('Upload task created successfully');
+      console.log('Upload task state:', uploadTask.snapshot.state);
+      
+      // Add timeout to catch if upload never starts
+      const uploadTimeout = setTimeout(() => {
+        console.error('Upload timeout - task never started progress');
+        uploadTask.cancel();
+        setError('Upload timed out. Please check your internet connection and try again.');
+        setUploading(false);
+        setUploadProgress(0);
+      }, 30000); // 30 second timeout
       
       // Monitor upload progress
       await new Promise((resolve, reject) => {
         uploadTask.on('state_changed',
           (snapshot) => {
             // Calculate and update progress
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 90; // Reserve 10% for metadata save
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 90;
             console.log(`Upload progress: ${progress}% (${snapshot.bytesTransferred}/${snapshot.totalBytes})`);
+            console.log('Upload state:', snapshot.state);
             setUploadProgress(Math.round(progress));
+            
+            // Clear timeout if progress is happening
+            if (snapshot.bytesTransferred > 0) {
+              clearTimeout(uploadTimeout);
+            }
           },
           (error) => {
+            clearTimeout(uploadTimeout);
             console.error('Upload error:', error);
             console.error('Error code:', error.code);
             console.error('Error message:', error.message);
+            console.error('Full error object:', error);
             reject(error);
           },
           () => {
-            // Upload completed successfully
+            clearTimeout(uploadTimeout);
             console.log('Upload completed successfully');
             resolve(uploadTask.snapshot);
           }
         );
+        
+        // Log initial state
+        console.log('Upload listener attached, initial state:', uploadTask.snapshot.state);
       });
       
       setUploadProgress(95);
@@ -169,6 +207,7 @@ export default function AdminDocumentUploadPage() {
       console.log('Document data:', docData);
       await addDoc(collection(db, 'documents'), docData);
       console.log('Document metadata saved successfully');
+      console.log('=== UPLOAD DEBUG END ===');
       
       setUploadProgress(100);
       setSuccess('Document uploaded successfully!');
@@ -188,6 +227,7 @@ export default function AdminDocumentUploadPage() {
       }, 2000);
       
     } catch (error: any) {
+      console.error('=== UPLOAD ERROR ===');
       console.error('Upload error:', error);
       console.error('Error details:', {
         code: error.code,
@@ -210,6 +250,8 @@ export default function AdminDocumentUploadPage() {
         errorMessage = 'Invalid file. Please select a valid file and try again.';
       } else if (error.code === 'permission-denied') {
         errorMessage = 'Permission denied. Please check your admin privileges.';
+      } else if (error.code === 'storage/retry-limit-exceeded') {
+        errorMessage = 'Upload failed after multiple retries. This may be due to network issues or Firebase Storage configuration. Please try again later.';
       } else if (error.message) {
         errorMessage = `Upload failed: ${error.message}`;
       }
