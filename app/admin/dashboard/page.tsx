@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { FaSpinner, FaTools, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaUsers, FaChartBar, FaFileAlt, FaDollarSign } from 'react-icons/fa';
+import { FaSpinner, FaTools, FaClipboardCheck, FaDownload, FaPhone, FaHome, FaCog, FaSignOutAlt, FaUsers, FaChartBar, FaFileAlt, FaDollarSign, FaClock } from 'react-icons/fa';
 import Image from 'next/image';
 import Link from 'next/link';
 import { collection, query, where, onSnapshot, getCountFromServer, getDocs } from 'firebase/firestore';
@@ -102,9 +102,11 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <FaSpinner className="animate-spin text-4xl text-green-600" />
-        <span className="ml-4 text-lg text-gray-700">Loading...</span>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-50 via-amber-50 to-emerald-50">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-emerald-600 mx-auto mb-4" />
+          <span className="text-lg text-stone-700">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -114,93 +116,198 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex bg-black">
-      {/* Sidebar */}
-      <aside className="w-72 bg-[#111827] text-white flex flex-col items-center py-8 min-h-screen shadow-xl border-r-2 border-green-500">
-        <div className="mb-8 flex flex-col items-center">
-          <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center text-3xl mb-2 shadow-lg border-4 border-green-300">
-            {userData.name?.charAt(0) || 'A'}
+    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-amber-50 to-emerald-50 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <div className="relative z-10 flex min-h-screen">
+        {/* Sidebar */}
+        <aside className="w-80 bg-white/30 backdrop-blur-xl border-r border-stone-200/50 shadow-xl flex flex-col py-8 min-h-screen">
+          <div className="mb-8 flex flex-col items-center px-6">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-4xl text-white mb-4 shadow-lg">
+              {userData.name?.charAt(0) || 'A'}
+            </div>
+            <div className="font-bold text-xl text-stone-800">{userData.name}</div>
+            <div className="text-sm text-stone-600 mb-2">{userData.email}</div>
+            <div className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+              Administrator
+            </div>
           </div>
-          <div className="font-semibold text-lg text-green-300">{userData.name}</div>
-          <div className="text-sm text-gray-400">{userData.email}</div>
-        </div>
-        <nav className="flex flex-col gap-3 w-full px-4">
-          <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaHome style={{ color: '#22d3ee' }} /> Dashboard</Link>
-          <Link href="/admin/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaTools style={{ color: '#22d3ee' }} /> Maintenance</Link>
-          <Link href="/admin/lift-bookings" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaClipboardCheck style={{ color: '#22d3ee' }} /> Lift Bookings</Link>
-          <Link href="/admin/documents" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaFileAlt style={{ color: '#22d3ee' }} /> Documents</Link>
-          <Link href="/admin/amenity-payments" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaDollarSign style={{ color: '#22d3ee' }} /> Amenity Payments</Link>
-          <Link href="/strata-roll" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaUsers style={{ color: '#22d3ee' }} /> Strata Roll</Link>
-          <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base mb-1 text-white border border-green-500"><FaDownload style={{ color: '#22d3ee' }} /> Downloads</Link>
-          <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base text-white border border-green-500"><FaPhone style={{ color: '#22d3ee' }} /> Contact</Link>
-          <button onClick={() => setShowSettings(true)} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base text-white border border-green-500"><FaCog style={{ color: '#22d3ee' }} /> Settings</button>
-          <button onClick={async () => { await signOut(); }} className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-900 hover:bg-green-700 transition font-medium text-base text-white border border-green-500"><FaSignOutAlt style={{ color: '#22d3ee' }} /> Sign Out</button>
-        </nav>
-      </aside>
-      {/* Main Content */}
-      <main className="flex-1 p-10 bg-[#18181b]">
-        <div className="max-w-5xl mx-auto">
-          <div className="bg-[#23272f] rounded-2xl shadow-lg p-8 mb-8 border border-green-700">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <div className="flex-1 min-w-0">
-                <h2 className="text-3xl font-bold mb-2 leading-tight text-green-400">Welcome, {userData.name} (Admin)</h2>
-                {dateString && <div className="text-green-200 mb-1 text-lg">{dateString}</div>}
-                {timeString && <div className="text-3xl font-bold text-green-500">{timeString}</div>}
-                <div className="mt-2 text-base text-green-300">Role: {userData.role || '-'}</div>
+          
+          <nav className="flex flex-col gap-2 px-4 flex-1">
+            <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-100 text-emerald-700 font-medium text-base border border-emerald-200 shadow-sm">
+              <FaHome className="text-emerald-600" /> Dashboard
+            </Link>
+            <Link href="/admin/maintenance" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaTools className="text-stone-600" /> Maintenance
+            </Link>
+            <Link href="/admin/lift-bookings" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaClipboardCheck className="text-stone-600" /> Lift Bookings
+            </Link>
+            <Link href="/admin/documents" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaFileAlt className="text-stone-600" /> Documents
+            </Link>
+            <Link href="/admin/amenity-payments" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaDollarSign className="text-stone-600" /> Amenity Payments
+            </Link>
+            <Link href="/strata-roll" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaUsers className="text-stone-600" /> Resident Directory
+            </Link>
+            <Link href="/downloads" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaDownload className="text-stone-600" /> Downloads
+            </Link>
+            <Link href="/contact" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaPhone className="text-stone-600" /> Contact
+            </Link>
+            <Link href="/admin/analytics" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/50 hover:bg-white/70 text-stone-700 hover:text-emerald-700 font-medium text-base border border-stone-200/50 hover:border-emerald-200 transition-all duration-200">
+              <FaChartBar className="text-stone-600" /> Analytics
+            </Link>
+          </nav>
+
+          <div className="mt-auto px-4 space-y-2">
+            <button onClick={() => setShowSettings(true)} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium text-base w-full border border-stone-200 transition-all duration-200">
+              <FaCog className="text-stone-600" /> Settings
+            </button>
+            <button onClick={async () => { await signOut(); }} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-medium text-base w-full border border-red-200 transition-all duration-200">
+              <FaSignOutAlt className="text-red-600" /> Sign Out
+            </button>
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* Welcome Header */}
+            <div className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-xl p-8 mb-8 border border-stone-200/50">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="flex-1">
+                  <h1 className="text-4xl font-bold text-stone-800 mb-3">
+                    Welcome back, {userData.name}
+                  </h1>
+                  <div className="flex items-center gap-4 text-stone-600 mb-2">
+                    <FaClock className="text-emerald-600" />
+                    <span className="text-lg">{dateString}</span>
+                  </div>
+                  <div className="text-3xl font-bold text-emerald-600 mb-3">{timeString}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                      Admin Dashboard
+                    </span>
+                    <span className="text-stone-600">•</span>
+                    <span className="text-stone-600">Building Management System</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <Image 
+                    src="/images/sevara_apartments.jpg" 
+                    alt="Building" 
+                    width={320} 
+                    height={180} 
+                    className="rounded-2xl object-cover shadow-lg border border-stone-200/50" 
+                  />
+                </div>
               </div>
-              <div className="mt-4 md:mt-0 md:ml-8 flex-shrink-0">
-                <Image src="/images/sevara_apartments.jpg" alt="Building" width={340} height={200} className="rounded-lg object-cover shadow-lg border-4 border-green-700" />
+            </div>
+
+            {/* Dashboard Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Link href="/admin/maintenance" className="group bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-8 border border-stone-200/50 hover:bg-white/80 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FaTools className="text-3xl text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">Maintenance Requests</h3>
+                  <div className="text-3xl font-bold text-amber-600 mb-1">{maintenanceCount}</div>
+                  <p className="text-stone-600">Open requests</p>
+                </div>
+              </Link>
+
+              <Link href="/admin/lift-bookings" className="group bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-8 border border-stone-200/50 hover:bg-white/80 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FaClipboardCheck className="text-3xl text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">Lift Bookings</h3>
+                  <div className="text-3xl font-bold text-emerald-600 mb-1">{pendingBookings}</div>
+                  <p className="text-stone-600">Pending approval</p>
+                </div>
+              </Link>
+
+              <Link href="/admin/documents" className="group bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-8 border border-stone-200/50 hover:bg-white/80 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FaFileAlt className="text-3xl text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">Documents</h3>
+                  <div className="text-3xl font-bold text-blue-600 mb-1">{docCount}</div>
+                  <p className="text-stone-600">Total files</p>
+                </div>
+              </Link>
+
+              <Link href="/admin/amenity-payments" className="group bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-8 border border-stone-200/50 hover:bg-white/80 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FaDollarSign className="text-3xl text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">Revenue</h3>
+                  <div className="text-3xl font-bold text-green-600 mb-1">${totalRevenue}</div>
+                  <p className="text-stone-600">Amenity payments</p>
+                </div>
+              </Link>
+
+              <Link href="/strata-roll" className="group bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-8 border border-stone-200/50 hover:bg-white/80 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FaUsers className="text-3xl text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">Residents</h3>
+                  <div className="text-3xl font-bold text-purple-600 mb-1">{unitCount}</div>
+                  <p className="text-stone-600">Total units</p>
+                </div>
+              </Link>
+
+              <Link href="/admin/analytics" className="group bg-white/60 backdrop-blur-xl rounded-2xl shadow-lg p-8 border border-stone-200/50 hover:bg-white/80 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <FaChartBar className="text-3xl text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">Analytics</h3>
+                  <div className="text-3xl font-bold text-teal-600 mb-1">{activity}</div>
+                  <p className="text-stone-600">System events</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl p-8 w-full max-w-md relative border border-stone-200">
+            <button 
+              onClick={() => setShowSettings(false)} 
+              className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 text-2xl transition-colors"
+            >
+              &times;
+            </button>
+            <h3 className="text-2xl font-bold mb-6 text-stone-800">Admin Settings</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-stone-50 rounded-xl border border-stone-200">
+                <h4 className="font-semibold text-stone-800 mb-2">Account Information</h4>
+                <p className="text-stone-600 text-sm">Manage your admin account settings and preferences.</p>
+              </div>
+              <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                <h4 className="font-semibold text-emerald-800 mb-2">System Status</h4>
+                <p className="text-emerald-600 text-sm">All systems operational</p>
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-8">
-            <Link href="/admin/maintenance" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaTools className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Maintenance Requests</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">{maintenanceCount} open</div>
-            </Link>
-            <Link href="/admin/lift-bookings" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaClipboardCheck className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Lift Bookings</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">{pendingBookings} pending</div>
-            </Link>
-            <Link href="/admin/documents" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaDownload className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Document Management</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">{docCount} files</div>
-            </Link>
-            <Link href="/admin/amenity-payments" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaDollarSign className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Amenity Payments</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">${totalRevenue}</div>
-            </Link>
-            <Link href="/strata-roll" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaUsers className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Resident Directory</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">{unitCount} units</div>
-            </Link>
-            <Link href="/admin/analytics" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaChartBar className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Analytics</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">{activity} events</div>
-            </Link>
-            <Link href="/admin/messages" className="bg-[#23272f] rounded-2xl shadow-lg p-12 flex flex-col items-center hover:bg-green-900 transition cursor-pointer min-h-[180px] border border-green-700">
-              <FaPhone className="text-5xl mb-3" style={{ color: '#22d3ee' }} />
-              <div className="font-semibold text-xl text-green-200">Messages</div>
-              <div className="text-green-400 mt-2 text-lg font-bold">{unreadMessages} unread</div>
-            </Link>
-          </div>
         </div>
-        {/* Settings Modal Placeholder */}
-        {showSettings && (
-          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
-            <div className="bg-[#23272f] rounded-xl shadow-xl p-8 w-full max-w-md relative border border-green-700">
-              <button onClick={() => setShowSettings(false)} className="absolute top-2 right-2 text-green-400 hover:text-green-200 text-2xl">&times;</button>
-              <h3 className="text-xl font-bold mb-4 text-green-300">Settings</h3>
-            </div>
-          </div>
-        )}
-      </main>
+      )}
     </div>
   );
 } 

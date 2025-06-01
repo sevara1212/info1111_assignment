@@ -3,161 +3,143 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaUser, FaUserShield, FaBuilding, FaShieldAlt, FaGem, FaStar, FaArrowRight, FaCheck, FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaUserShield, FaBuilding, FaShieldAlt, FaLeaf, FaStar, FaArrowRight, FaCheck, FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
+  const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
     setIsVisible(true);
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % 3);
-    }, 3000);
+    
+    // Update time every second
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const features = [
+  const quickAccess = [
     {
       icon: <FaBuilding className="text-4xl" />,
-      title: "Smart Building Management",
-      description: "State-of-the-art technology for seamless living"
+      title: "Building Services",
+      description: "Maintenance, bookings, and facility access"
     },
     {
       icon: <FaShieldAlt className="text-4xl" />,
-      title: "Premium Security",
-      description: "24/7 security with advanced access control"
+      title: "Security & Access",
+      description: "Key cards, visitor access, and security updates"
     },
     {
-      icon: <FaGem className="text-4xl" />,
-      title: "Luxury Amenities",
-      description: "World-class facilities at your fingertips"
+      icon: <FaLeaf className="text-4xl" />,
+      title: "Community Info",
+      description: "Events, notices, and resident communications"
     }
   ];
 
-  const stats = [
-    { number: "100+", label: "Luxury Residences" },
-    { number: "24/7", label: "Concierge Service" },
-    { number: "5★", label: "Premium Rating" },
-    { number: "99%", label: "Satisfaction Rate" }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-amber-50 to-emerald-50 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-conic from-purple-500/20 to-blue-500/20 rounded-full blur-3xl animate-spin-slow"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-conic from-stone-200/20 to-emerald-200/20 rounded-full blur-3xl animate-spin-slow"></div>
       </div>
 
       {/* Navigation */}
       <nav className="relative z-10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <FaBuilding className="text-3xl text-purple-400" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <FaBuilding className="text-3xl text-emerald-600" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-stone-700 bg-clip-text text-transparent">
               Sevara Apartments
             </span>
           </div>
-          <div className="hidden md:flex space-x-8 text-white/80">
-            <a href="#features" className="hover:text-purple-400 transition-colors duration-300">Features</a>
-            <a href="#amenities" className="hover:text-purple-400 transition-colors duration-300">Amenities</a>
-            <a href="#contact" className="hover:text-purple-400 transition-colors duration-300">Contact</a>
+          <div className="hidden md:flex items-center space-x-6 text-stone-700">
+            <div className="flex items-center space-x-2">
+              <FaClock className="text-emerald-600" />
+              <span className="font-medium">{currentTime}</span>
+            </div>
+            <a href="#services" className="hover:text-emerald-600 transition-colors duration-300">Services</a>
+            <a href="#contact" className="hover:text-emerald-600 transition-colors duration-300">Contact</a>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 px-6 pt-20 pb-32">
+      <section className="relative z-10 px-6 pt-16 pb-20">
         <div className="max-w-7xl mx-auto">
           <div className={`text-center transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-            <h1 className="text-6xl md:text-8xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent animate-gradient">
-                LUXURY
+            <h1 className="text-5xl md:text-7xl font-bold mb-8">
+              <span className="bg-gradient-to-r from-emerald-600 via-stone-600 to-amber-600 bg-clip-text text-transparent">
+                Welcome Back
               </span>
-              <br />
-              <span className="text-white">REDEFINED</span>
             </h1>
-            <p className="text-xl md:text-2xl text-white/80 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Experience the pinnacle of modern living with our premium strata management platform. 
-              Where technology meets luxury.
+            <p className="text-xl md:text-2xl text-stone-700 mb-16 max-w-4xl mx-auto leading-relaxed">
+              Access your resident portal to manage your apartment services, view community updates, 
+              and connect with building management.
             </p>
             
-            {/* CTA Buttons */}
-            <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-16">
+            {/* Portal Access Buttons */}
+            <div className="flex flex-col md:flex-row gap-8 justify-center items-center mb-20">
               <Link 
                 href="/login"
-                className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold text-lg shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+                className="group relative px-12 py-8 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl font-bold text-2xl shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
               >
-                <span className="flex items-center space-x-2">
-                  <FaUser />
+                <div className="flex flex-col items-center space-y-3">
+                  <FaUser className="text-5xl" />
                   <span>Resident Portal</span>
-                  <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
-                </span>
+                  <span className="text-sm font-normal opacity-90">Maintenance • Amenities • Documents</span>
+                  <FaArrowRight className="transform group-hover:translate-x-2 transition-transform" />
+                </div>
               </Link>
               
               <Link 
                 href="/admin/login"
-                className="group relative px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-full font-semibold text-lg shadow-2xl hover:shadow-emerald-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+                className="group relative px-12 py-8 bg-gradient-to-r from-stone-600 to-amber-600 text-white rounded-2xl font-bold text-2xl shadow-2xl hover:shadow-stone-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 min-w-[320px]"
               >
-                <span className="flex items-center space-x-2">
-                  <FaUserShield />
+                <div className="flex flex-col items-center space-y-3">
+                  <FaUserShield className="text-5xl" />
                   <span>Admin Portal</span>
-                  <FaArrowRight className="transform group-hover:translate-x-1 transition-transform" />
-                </span>
-              </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <div 
-                  key={index}
-                  className={`text-center transform transition-all duration-700 delay-${index * 200} ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
-                >
-                  <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-                    {stat.number}
-                  </div>
-                  <div className="text-white/60 text-sm uppercase tracking-wider">
-                    {stat.label}
-                  </div>
+                  <span className="text-sm font-normal opacity-90">Management • Analytics • Reports</span>
+                  <FaArrowRight className="transform group-hover:translate-x-2 transition-transform" />
                 </div>
-              ))}
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="relative z-10 px-6 py-20">
+      {/* Quick Access Section */}
+      <section id="services" className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Premium Features
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-stone-800 mb-4">
+              Quick Access
             </h2>
-            <p className="text-xl text-white/80 max-w-3xl mx-auto">
-              Discover what makes Sevara Apartments the ultimate choice for luxury living
+            <p className="text-xl text-stone-700">
+              Common services and information for residents
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
+            {quickAccess.map((item, index) => (
               <div 
                 key={index}
-                className={`relative bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 transition-all duration-500 transform hover:scale-105 hover:bg-white/15 ${
-                  activeFeature === index ? 'ring-2 ring-purple-400 shadow-2xl shadow-purple-500/25' : ''
-                }`}
-                onMouseEnter={() => setActiveFeature(index)}
+                className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 border border-stone-200 transition-all duration-300 transform hover:scale-105 hover:bg-white/90 shadow-lg"
               >
-                <div className="text-purple-400 mb-6">
-                  {feature.icon}
+                <div className="text-emerald-600 mb-6 text-center">
+                  {item.icon}
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  {feature.title}
+                <h3 className="text-xl font-bold text-stone-800 mb-4 text-center">
+                  {item.title}
                 </h3>
-                <p className="text-white/80 leading-relaxed">
-                  {feature.description}
+                <p className="text-stone-700 leading-relaxed text-center">
+                  {item.description}
                 </p>
               </div>
             ))}
@@ -165,64 +147,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Amenities Section */}
-      <section id="amenities" className="relative z-10 px-6 py-20">
+      {/* Building Amenities */}
+      <section className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-12 border border-white/10">
+          <div className="bg-white/60 backdrop-blur-xl rounded-3xl p-12 border border-stone-200 shadow-xl">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                  World-Class Amenities
+                <h2 className="text-4xl font-bold text-stone-800 mb-6">
+                  Building Amenities
                 </h2>
-                <p className="text-xl text-white/80 mb-8">
-                  Indulge in luxury amenities designed for the discerning resident
+                <p className="text-xl text-stone-700 mb-8">
+                  Available facilities for all residents
                 </p>
                 
                 <div className="space-y-4">
                   {[
-                    "Olympic-sized Swimming Pool",
-                    "State-of-the-art Fitness Center", 
-                    "Rooftop Garden & Lounge",
-                    "24/7 Concierge Service",
-                    "Private Cinema Room",
-                    "Executive Business Center"
+                    "Swimming Pool",
+                    "Fitness Center", 
+                    "24/7 Concierge Service"
                   ].map((amenity, index) => (
                     <div key={index} className="flex items-center space-x-3">
-                      <FaCheck className="text-purple-400" />
-                      <span className="text-white/90">{amenity}</span>
+                      <FaCheck className="text-emerald-600" />
+                      <span className="text-stone-800 font-medium text-lg">{amenity}</span>
                     </div>
                   ))}
                 </div>
-
-                <Link 
-                  href="/amenities"
-                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full font-semibold mt-8 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  <span>Explore Amenities</span>
-                  <FaArrowRight />
-                </Link>
               </div>
               
               <div className="relative">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-4">
-                    <div className="bg-gradient-to-br from-purple-500/20 to-blue-500/20 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                      <FaGem className="text-3xl text-purple-400 mb-3" />
-                      <h4 className="text-white font-semibold">Premium Spa</h4>
+                    <div className="bg-gradient-to-br from-emerald-100 to-teal-100 backdrop-blur-lg rounded-2xl p-6 border border-emerald-200">
+                      <FaLeaf className="text-3xl text-emerald-600 mb-3" />
+                      <h4 className="text-stone-800 font-semibold">Pool Access</h4>
                     </div>
-                    <div className="bg-gradient-to-br from-blue-500/20 to-teal-500/20 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                      <FaStar className="text-3xl text-blue-400 mb-3" />
-                      <h4 className="text-white font-semibold">5-Star Service</h4>
+                    <div className="bg-gradient-to-br from-stone-100 to-amber-100 backdrop-blur-lg rounded-2xl p-6 border border-stone-200">
+                      <FaStar className="text-3xl text-amber-600 mb-3" />
+                      <h4 className="text-stone-800 font-semibold">Concierge</h4>
                     </div>
                   </div>
                   <div className="space-y-4 mt-8">
-                    <div className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                      <FaBuilding className="text-3xl text-emerald-400 mb-3" />
-                      <h4 className="text-white font-semibold">Smart Building</h4>
+                    <div className="bg-gradient-to-br from-teal-100 to-emerald-100 backdrop-blur-lg rounded-2xl p-6 border border-teal-200">
+                      <FaBuilding className="text-3xl text-teal-600 mb-3" />
+                      <h4 className="text-stone-800 font-semibold">Fitness Center</h4>
                     </div>
-                    <div className="bg-gradient-to-br from-pink-500/20 to-purple-500/20 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                      <FaShieldAlt className="text-3xl text-pink-400 mb-3" />
-                      <h4 className="text-white font-semibold">Elite Security</h4>
+                    <div className="bg-gradient-to-br from-amber-100 to-stone-100 backdrop-blur-lg rounded-2xl p-6 border border-amber-200">
+                      <FaShieldAlt className="text-3xl text-stone-600 mb-3" />
+                      <h4 className="text-stone-800 font-semibold">Security</h4>
                     </div>
                   </div>
                 </div>
@@ -233,59 +204,51 @@ export default function Home() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="relative z-10 px-6 py-20">
+      <section id="contact" className="relative z-10 px-6 py-16">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Experience Luxury?
+          <h2 className="text-4xl font-bold text-stone-800 mb-6">
+            Building Contact Information
           </h2>
-          <p className="text-xl text-white/80 mb-12 max-w-3xl mx-auto">
-            Join the exclusive community at Sevara Apartments. Contact us today to schedule your private tour.
+          <p className="text-xl text-stone-700 mb-12 max-w-3xl mx-auto">
+            Need assistance? Contact our building management team or concierge service.
           </p>
           
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-              <FaPhone className="text-3xl text-purple-400 mx-auto mb-4" />
-              <h4 className="text-white font-semibold mb-2">Call Us</h4>
-              <p className="text-white/80">+1 (555) 123-4567</p>
+            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-stone-200 shadow-lg">
+              <FaPhone className="text-3xl text-emerald-600 mx-auto mb-4" />
+              <h4 className="text-stone-800 font-semibold mb-2">Emergency & Concierge</h4>
+              <p className="text-stone-700 text-lg font-medium">0400 000 000</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-              <FaEnvelope className="text-3xl text-blue-400 mx-auto mb-4" />
-              <h4 className="text-white font-semibold mb-2">Email Us</h4>
-              <p className="text-white/80">info@sevara.apartments</p>
+            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-stone-200 shadow-lg">
+              <FaEnvelope className="text-3xl text-teal-600 mx-auto mb-4" />
+              <h4 className="text-stone-800 font-semibold mb-2">Building Management</h4>
+              <p className="text-stone-700">info@sevara.apartments</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-              <FaMapMarkerAlt className="text-3xl text-emerald-400 mx-auto mb-4" />
-              <h4 className="text-white font-semibold mb-2">Visit Us</h4>
-              <p className="text-white/80">Sydney, Australia</p>
+            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 border border-stone-200 shadow-lg">
+              <FaMapMarkerAlt className="text-3xl text-amber-600 mx-auto mb-4" />
+              <h4 className="text-stone-800 font-semibold mb-2">Location</h4>
+              <p className="text-stone-700">Pyrmont, Sydney NSW</p>
             </div>
           </div>
-
-          <Link 
-            href="/contact"
-            className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105"
-          >
-            <span>Schedule a Tour</span>
-            <FaArrowRight />
-          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-12 border-t border-white/10">
+      <footer className="relative z-10 px-6 py-12 border-t border-stone-200 bg-white/50 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-2 mb-6">
-            <FaBuilding className="text-2xl text-purple-400" />
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+            <FaBuilding className="text-2xl text-emerald-600" />
+            <span className="text-xl font-bold bg-gradient-to-r from-emerald-700 to-stone-700 bg-clip-text text-transparent">
               Sevara Apartments
             </span>
           </div>
-          <p className="text-white/60 mb-6">
-            © 2024 Sevara Apartments. All rights reserved. Experience luxury redefined.
+          <p className="text-stone-600 mb-6">
+            © 2025 Sevara Apartments. All rights reserved. Resident portal and building management system.
           </p>
-          <div className="flex justify-center space-x-6 text-white/60">
-            <a href="#" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-purple-400 transition-colors">Cookie Policy</a>
+          <div className="flex justify-center space-x-6 text-stone-600">
+            <Link href="/privacy-policy" className="hover:text-emerald-600 transition-colors">Privacy Policy</Link>
+            <Link href="/terms-of-service" className="hover:text-emerald-600 transition-colors">Terms of Service</Link>
+            <Link href="/cookie-policy" className="hover:text-emerald-600 transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </footer>
