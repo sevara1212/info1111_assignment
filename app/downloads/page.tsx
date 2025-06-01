@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaFolder, FaFolderOpen, FaFile, FaDownload } from 'react-icons/fa';
 import styles from './styles.module.css';
 import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
@@ -15,11 +17,22 @@ interface File {
   name: string;
   path?: string;
   generate?: () => Promise<void>;
+  firebaseUrl?: string;
+  isFirebaseFile?: boolean;
 }
 
 interface Folder {
   name: string;
   files: File[];
+}
+
+interface FirebaseDocument {
+  id: string;
+  title: string;
+  fileUrl: string;
+  fileName: string;
+  uploadedAt: any;
+  visibility: string;
 }
 
 async function generateCertificate(userData: any) {
@@ -103,12 +116,73 @@ async function generateCertificate(userData: any) {
 }
 
 export default function DownloadsPage() {
-  const { userData } = useAuth();
+  const { userData, user } = useAuth();
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [downloading, setDownloading] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [firebaseDocuments, setFirebaseDocuments] = useState<FirebaseDocument[]>([]);
+  const [loadingFirebase, setLoadingFirebase] = useState(true);
+
+  // Fetch Firebase documents
+  useEffect(() => {
+    const fetchFirebaseDocuments = async () => {
+      if (!user) {
+        setLoadingFirebase(false);
+        return;
+      }
+
+      try {
+        console.log('Fetching documents from Firebase for downloads page...');
+        const documentsQuery = query(collection(db, 'documents'));
+        const snapshot = await getDocs(documentsQuery);
+        
+        const docs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as FirebaseDocument[];
+
+        // Filter based on user role and visibility
+        let visibleDocs = docs;
+        if (userData?.role !== 'admin') {
+          visibleDocs = docs.filter(doc => 
+            doc.visibility === 'resident' || doc.visibility === 'public'
+          );
+        }
+
+        // Sort by upload date (newest first)
+        visibleDocs.sort((a, b) => {
+          const dateA = a.uploadedAt?.toDate?.() || new Date(0);
+          const dateB = b.uploadedAt?.toDate?.() || new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        console.log('Loaded Firebase documents for downloads:', visibleDocs);
+        setFirebaseDocuments(visibleDocs);
+      } catch (error) {
+        console.error('Error fetching Firebase documents:', error);
+        setError('Failed to load uploaded documents');
+      } finally {
+        setLoadingFirebase(false);
+      }
+    };
+
+    fetchFirebaseDocuments();
+  }, [user, userData]);
+
+  // Convert Firebase documents to File format
+  const createFirebaseFiles = (): File[] => {
+    return firebaseDocuments.map(doc => ({
+      name: doc.title || doc.fileName,
+      firebaseUrl: doc.fileUrl,
+      isFirebaseFile: true
+    }));
+  };
 
   const folders: Folder[] = [
+    {
+      name: 'New Uploads',
+      files: createFirebaseFiles()
+    },
     {
       name: 'General Information',
       files: [
@@ -152,10 +226,23 @@ export default function DownloadsPage() {
   const handleDownload = async (file: File) => {
     try {
       setError(null);
-      setDownloading(prev => ({ ...prev, [file.path || file.name]: true }));
+      setDownloading(prev => ({ ...prev, [file.path || file.firebaseUrl || file.name]: true }));
+      
       if (file.generate) {
+        // Generated files (like certificates)
         await file.generate();
+      } else if (file.isFirebaseFile && file.firebaseUrl) {
+        // Firebase files - direct download from Firebase Storage URL
+        console.log('Downloading Firebase file:', file.name, file.firebaseUrl);
+        const a = document.createElement('a');
+        a.href = file.firebaseUrl;
+        a.download = file.name;
+        a.target = '_blank'; // Open in new tab to avoid CORS issues
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else if (file.path) {
+        // Static files from public folder
         const response = await fetch(file.path);
         if (!response.ok) {
           throw new Error('File not found');
@@ -170,13 +257,13 @@ export default function DownloadsPage() {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       } else {
-        throw new Error('No download or generate function');
+        throw new Error('No download method available for this file');
       }
     } catch (err) {
       setError('Failed to download the file. Please try again.');
       console.error('Download error:', err);
     } finally {
-      setDownloading(prev => ({ ...prev, [file.path || file.name]: false }));
+      setDownloading(prev => ({ ...prev, [file.path || file.firebaseUrl || file.name]: false }));
     }
   };
 
@@ -197,11 +284,21 @@ export default function DownloadsPage() {
               <div 
                 className={styles.folderHeader}
                 onClick={() => toggleFolder(folder.name)}
+                style={{
+                  backgroundColor: folder.name === 'New Uploads' ? '#f0f9ff' : undefined,
+                  borderLeft: folder.name === 'New Uploads' ? '4px solid #38A169' : undefined,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  padding: '16px 20px',
+                  fontSize: '18px',
+                  fontWeight: '600'
+                }}
               >
-                <div className={styles.folderName}>
-                  {expandedFolders[folder.name] ? <FaFolderOpen className={styles.folderIcon} /> : <FaFolder className={styles.folderIcon} />}
-                  {folder.name}
+                <div style={{ marginRight: '12px', fontSize: '20px' }}>
+                  {expandedFolders[folder.name] ? <FaFolderOpen /> : <FaFolder />}
                 </div>
+                <span style={{ flex: 1, textAlign: 'left' }}>{folder.name}</span>
               </div>
               
               {expandedFolders[folder.name] && (
@@ -215,10 +312,10 @@ export default function DownloadsPage() {
                       <button
                         onClick={() => handleDownload(file)}
                         className={styles.downloadButton}
-                        disabled={downloading[file.path || file.name]}
+                        disabled={downloading[file.path || file.firebaseUrl || file.name]}
                       >
                         <FaDownload />
-                        {downloading[file.path || file.name] ? 'Downloading...' : 'Download'}
+                        {downloading[file.path || file.firebaseUrl || file.name] ? 'Downloading...' : 'Download'}
                       </button>
                     </div>
                   ))}

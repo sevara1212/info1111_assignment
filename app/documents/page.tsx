@@ -133,22 +133,38 @@ export default function DocumentsPage() {
 
   const fallbackToSimpleQuery = async () => {
     try {
+      console.log('=== FETCHING DOCUMENTS FROM FIRESTORE ===');
       console.log('Executing fallback simple query...');
+      console.log('User:', user?.email, 'Role:', userData?.role);
+      
       const documentsQuery = query(collection(db, 'documents'));
       const snapshot = await getDocs(documentsQuery);
       
-      const allDocs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Document[];
+      console.log('Raw snapshot:', snapshot);
+      console.log('Number of docs in snapshot:', snapshot.docs.length);
+      
+      const allDocs = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Document data:', doc.id, data);
+        return {
+          id: doc.id,
+          ...data
+        };
+      }) as Document[];
+      
+      console.log('All documents after mapping:', allDocs);
       
       // Filter documents based on user role and visibility
       let visibleDocs = allDocs;
       
       if (userData?.role !== 'admin') {
+        console.log('User is not admin, filtering for resident/public only');
         visibleDocs = allDocs.filter(doc => 
           doc.visibility === 'resident' || doc.visibility === 'public'
         );
+        console.log('Filtered documents for non-admin:', visibleDocs);
+      } else {
+        console.log('User is admin, showing all documents');
       }
       
       // Sort by upload date if available
@@ -158,18 +174,23 @@ export default function DocumentsPage() {
         return dateB.getTime() - dateA.getTime();
       });
       
-      console.log('Fallback query successful, documents:', visibleDocs);
+      console.log('Final visible documents after sorting:', visibleDocs);
       setDocuments(visibleDocs);
       setLoading(false);
       
       if (visibleDocs.length === 0) {
-        setError('No documents found. Documents will appear here when they are uploaded.');
+        console.log('No visible documents found');
+        setError('No documents found. Make sure documents have been uploaded and have the correct visibility settings.');
       } else {
+        console.log(`Successfully loaded ${visibleDocs.length} documents`);
         setError('');
       }
       
     } catch (fallbackError: any) {
-      console.error('Fallback query also failed:', fallbackError);
+      console.error('=== FIRESTORE QUERY ERROR ===');
+      console.error('Fallback query failed:', fallbackError);
+      console.error('Error code:', fallbackError.code);
+      console.error('Error message:', fallbackError.message);
       
       // Provide more specific error messages
       if (fallbackError.code === 'permission-denied') {
@@ -319,8 +340,45 @@ export default function DocumentsPage() {
           
           {/* Debug info for troubleshooting */}
           {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
-              <p><strong>Debug:</strong> User: {user?.email}, Role: {userData?.role}, Documents: {documents.length}</p>
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              <p><strong>Debug Info:</strong></p>
+              <p>• User: {user?.email}</p>
+              <p>• Role: {userData?.role}</p>
+              <p>• Documents loaded: {documents.length}</p>
+              <p>• Filtered documents: {filteredDocuments.length}</p>
+              <p>• Loading: {loading ? 'Yes' : 'No'}</p>
+              <p>• Error: {error || 'None'}</p>
+              <button
+                onClick={() => {
+                  console.log('=== MANUAL REFRESH TRIGGERED ===');
+                  setLoading(true);
+                  setError('');
+                  fallbackToSimpleQuery();
+                }}
+                className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs"
+              >
+                🔄 Force Refresh Now
+              </button>
+              <button
+                onClick={async () => {
+                  console.log('=== DIRECT FIRESTORE TEST ===');
+                  try {
+                    const testQuery = query(collection(db, 'documents'));
+                    const testSnapshot = await getDocs(testQuery);
+                    console.log('Direct test - Number of docs:', testSnapshot.docs.length);
+                    testSnapshot.docs.forEach(doc => {
+                      console.log('Direct test - Doc:', doc.id, doc.data());
+                    });
+                    alert(`Found ${testSnapshot.docs.length} documents in Firestore. Check console for details.`);
+                  } catch (error) {
+                    console.error('Direct test failed:', error);
+                    alert(`Firestore test failed: ${error}`);
+                  }
+                }}
+                className="mt-2 ml-2 px-3 py-1 bg-red-500 text-white rounded text-xs"
+              >
+                🧪 Test Firestore Direct
+              </button>
             </div>
           )}
         </div>
@@ -397,7 +455,7 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        {/* Documents Grid */}
+        {/* Documents Display */}
         {filteredDocuments.length === 0 && !loading && !error ? (
           <div className="text-center py-12 rounded-lg" style={{ backgroundColor: '#F9F7F1' }}>
             <FaFile className="text-6xl mx-auto mb-4" style={{ color: '#CFCFCF' }} />
@@ -412,102 +470,200 @@ export default function DocumentsPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDocuments.map((document) => (
-              <div
-                key={document.id}
-                className="rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-200 border"
-                style={{ 
-                  backgroundColor: '#F9F7F1',
-                  borderColor: '#CFCFCF'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#CBA135';
-                  e.currentTarget.style.backgroundColor = '#EDEDED';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#CFCFCF';
-                  e.currentTarget.style.backgroundColor = '#F9F7F1';
-                }}
-              >
-                {/* File Icon and Title */}
-                <div className="flex items-start mb-4">
-                  <div className="flex-shrink-0 mr-3">
-                    {getFileIcon(document.fileType)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-medium mb-1 truncate" style={{ color: '#1A1A1A' }}>
-                      {document.title}
-                    </h3>
-                    <div className="flex items-center text-sm" style={{ color: '#CFCFCF' }}>
-                      <div className="mr-2">
-                        {getVisibilityIcon(document.visibility)}
+          <>
+            {(() => {
+              const { newUploads, olderDocs } = separateDocuments(filteredDocuments);
+              
+              return (
+                <>
+                  {/* New Uploads Section */}
+                  {newUploads.length > 0 && (
+                    <div className="mb-8">
+                      <div className="flex items-center mb-4">
+                        <div className="flex items-center">
+                          <div className="w-3 h-3 rounded-full mr-3" style={{ backgroundColor: '#38A169' }}></div>
+                          <h2 className="text-xl font-semibold" style={{ color: '#1A1A1A' }}>
+                            New Uploads ({newUploads.length})
+                          </h2>
+                        </div>
+                        <div className="ml-3 px-2 py-1 text-xs rounded-full" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', color: '#38A169' }}>
+                          Last 24 hours
+                        </div>
                       </div>
-                      <span>{getVisibilityLabel(document.visibility)}</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {newUploads.map((document) => (
+                          <div
+                            key={document.id}
+                            className="rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-200 border"
+                            style={{ 
+                              backgroundColor: '#F9F7F1',
+                              borderColor: '#CFCFCF',
+                              borderWidth: '1px'
+                            }}
+                          >
+                            {/* New Upload Badge */}
+                            <div className="mb-2">
+                              <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: 'rgba(56, 161, 105, 0.1)', color: '#38A169' }}>
+                                <div className="w-2 h-2 rounded-full mr-1" style={{ backgroundColor: '#38A169' }}></div>
+                                New
+                              </span>
+                            </div>
+
+                            {/* File Icon and Title */}
+                            <div className="flex items-start mb-4">
+                              <div className="flex-shrink-0 mr-3">
+                                {getFileIcon(document.fileType)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-medium mb-1 truncate" style={{ color: '#1A1A1A' }}>
+                                  {document.title}
+                                </h3>
+                                <div className="flex items-center text-sm" style={{ color: '#CFCFCF' }}>
+                                  <div className="mr-2">
+                                    {getVisibilityIcon(document.visibility)}
+                                  </div>
+                                  <span>{getVisibilityLabel(document.visibility)}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Description */}
+                            {document.description && (
+                              <p className="text-sm mb-4 line-clamp-3" style={{ color: '#1A1A1A' }}>
+                                {document.description}
+                              </p>
+                            )}
+
+                            {/* Document Info */}
+                            <div className="text-xs mb-4 space-y-1" style={{ color: '#CFCFCF' }}>
+                              <div>Size: {formatFileSize(document.fileSize)}</div>
+                              <div>
+                                Uploaded: {document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                              </div>
+                              <div>By: {document.uploaderName}</div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => window.open(document.fileUrl, '_blank')}
+                                className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                                style={{ 
+                                  backgroundColor: '#38A169',
+                                  color: 'white'
+                                }}
+                              >
+                                <FaEye className="mr-1" />
+                                View
+                              </button>
+                              <a
+                                href={document.fileUrl}
+                                download
+                                className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors border focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                style={{ 
+                                  borderColor: '#CFCFCF',
+                                  backgroundColor: '#F9F7F1',
+                                  color: '#1A1A1A'
+                                }}
+                              >
+                                <FaDownload className="mr-1" />
+                                Download
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All Documents Section */}
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <div className="w-3 h-3 rounded-full mr-3" style={{ backgroundColor: '#CFCFCF' }}></div>
+                      <h2 className="text-xl font-semibold" style={{ color: '#1A1A1A' }}>
+                        {newUploads.length > 0 ? `All Documents (${filteredDocuments.length})` : `Documents (${filteredDocuments.length})`}
+                      </h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {(newUploads.length > 0 ? olderDocs : filteredDocuments).map((document) => (
+                        <div
+                          key={document.id}
+                          className="rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-200 border"
+                          style={{ 
+                            backgroundColor: '#F9F7F1',
+                            borderColor: '#CFCFCF',
+                            borderWidth: '1px'
+                          }}
+                        >
+                          {/* File Icon and Title */}
+                          <div className="flex items-start mb-4">
+                            <div className="flex-shrink-0 mr-3">
+                              {getFileIcon(document.fileType)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-lg font-medium mb-1 truncate" style={{ color: '#1A1A1A' }}>
+                                {document.title}
+                              </h3>
+                              <div className="flex items-center text-sm" style={{ color: '#CFCFCF' }}>
+                                <div className="mr-2">
+                                  {getVisibilityIcon(document.visibility)}
+                                </div>
+                                <span>{getVisibilityLabel(document.visibility)}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          {document.description && (
+                            <p className="text-sm mb-4 line-clamp-3" style={{ color: '#1A1A1A' }}>
+                              {document.description}
+                            </p>
+                          )}
+
+                          {/* Document Info */}
+                          <div className="text-xs mb-4 space-y-1" style={{ color: '#CFCFCF' }}>
+                            <div>Size: {formatFileSize(document.fileSize)}</div>
+                            <div>
+                              Uploaded: {document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                            </div>
+                            <div>By: {document.uploaderName}</div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => window.open(document.fileUrl, '_blank')}
+                              className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+                              style={{ 
+                                backgroundColor: '#38A169',
+                                color: 'white'
+                              }}
+                            >
+                              <FaEye className="mr-1" />
+                              View
+                            </button>
+                            <a
+                              href={document.fileUrl}
+                              download
+                              className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors border focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                              style={{ 
+                                borderColor: '#CFCFCF',
+                                backgroundColor: '#F9F7F1',
+                                color: '#1A1A1A'
+                              }}
+                            >
+                              <FaDownload className="mr-1" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-
-                {/* Description */}
-                {document.description && (
-                  <p className="text-sm mb-4 line-clamp-3" style={{ color: '#1A1A1A' }}>
-                    {document.description}
-                  </p>
-                )}
-
-                {/* Document Info */}
-                <div className="text-xs mb-4 space-y-1" style={{ color: '#CFCFCF' }}>
-                  <div>Size: {formatFileSize(document.fileSize)}</div>
-                  <div>
-                    Uploaded: {document.uploadedAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
-                  </div>
-                  <div>By: {document.uploaderName}</div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => window.open(document.fileUrl, '_blank')}
-                    className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
-                    style={{ 
-                      backgroundColor: '#38A169',
-                      color: 'white'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#CBA135';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#38A169';
-                    }}
-                  >
-                    <FaEye className="mr-1" />
-                    View
-                  </button>
-                  <a
-                    href={document.fileUrl}
-                    download
-                    className="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded transition-colors border focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                    style={{ 
-                      borderColor: '#CFCFCF',
-                      backgroundColor: '#F9F7F1',
-                      color: '#1A1A1A'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#EDEDED';
-                      e.currentTarget.style.borderColor = '#CBA135';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#F9F7F1';
-                      e.currentTarget.style.borderColor = '#CFCFCF';
-                    }}
-                  >
-                    <FaDownload className="mr-1" />
-                    Download
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+                </>
+              );
+            })()}
+          </>
         )}
 
         {/* Results Summary */}
