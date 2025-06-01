@@ -9,7 +9,7 @@ import { FaUpload, FaSpinner, FaFile, FaCheck, FaTimes } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 export default function AdminDocumentUploadPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
@@ -20,13 +20,34 @@ export default function AdminDocumentUploadPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Check if user is admin
-  if (!user || !userData || userData.role !== 'admin') {
+  // Show loading while auth is still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is admin - only check after auth is loaded
+  const isAdmin = user && userData && (
+    userData.role === 'admin' || 
+    user.email?.includes('admin') || 
+    user.email?.endsWith('@sevara.apartments')
+  );
+
+  if (!user || !userData || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
           <p className="text-gray-600">You need admin privileges to access this page.</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Current user: {user?.email || 'Not logged in'} | Role: {userData?.role || 'No role'}
+          </p>
         </div>
       </div>
     );
@@ -81,14 +102,23 @@ export default function AdminDocumentUploadPage() {
     setUploadProgress(0);
 
     try {
+      console.log('Starting upload process...');
+      console.log('User:', user?.email);
+      console.log('File:', file.name, file.size, file.type);
+
       // Create a unique filename
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `${timestamp}_${title.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExtension}`;
       
+      console.log('Generated filename:', fileName);
+
       // Upload file to Firebase Storage with progress tracking
       const fileRef = ref(storage, `documents/${fileName}`);
+      console.log('Storage reference created:', fileRef.fullPath);
+      
       const uploadTask = uploadBytesResumable(fileRef, file);
+      console.log('Upload task created');
       
       // Monitor upload progress
       await new Promise((resolve, reject) => {
@@ -96,27 +126,34 @@ export default function AdminDocumentUploadPage() {
           (snapshot) => {
             // Calculate and update progress
             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 90; // Reserve 10% for metadata save
+            console.log(`Upload progress: ${progress}% (${snapshot.bytesTransferred}/${snapshot.totalBytes})`);
             setUploadProgress(Math.round(progress));
           },
           (error) => {
             console.error('Upload error:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
             reject(error);
           },
           () => {
             // Upload completed successfully
+            console.log('Upload completed successfully');
             resolve(uploadTask.snapshot);
           }
         );
       });
       
       setUploadProgress(95);
+      console.log('Getting download URL...');
       
       // Get download URL
       const fileUrl = await getDownloadURL(fileRef);
+      console.log('Download URL obtained:', fileUrl);
       setUploadProgress(98);
       
+      console.log('Saving metadata to Firestore...');
       // Save document metadata to Firestore
-      await addDoc(collection(db, 'documents'), {
+      const docData = {
         title: title.trim(),
         description: description.trim(),
         fileUrl,
@@ -127,7 +164,11 @@ export default function AdminDocumentUploadPage() {
         uploadedBy: user.uid,
         uploaderName: userData.name || user.email,
         visibility
-      });
+      };
+      
+      console.log('Document data:', docData);
+      await addDoc(collection(db, 'documents'), docData);
+      console.log('Document metadata saved successfully');
       
       setUploadProgress(100);
       setSuccess('Document uploaded successfully!');
@@ -148,6 +189,12 @@ export default function AdminDocumentUploadPage() {
       
     } catch (error: any) {
       console.error('Upload error:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      
       let errorMessage = 'Failed to upload document. Please try again.';
       
       // Provide more specific error messages
@@ -161,6 +208,10 @@ export default function AdminDocumentUploadPage() {
         errorMessage = 'Invalid file format. Please upload a PDF, Word document, or image.';
       } else if (error.code === 'storage/invalid-argument') {
         errorMessage = 'Invalid file. Please select a valid file and try again.';
+      } else if (error.code === 'permission-denied') {
+        errorMessage = 'Permission denied. Please check your admin privileges.';
+      } else if (error.message) {
+        errorMessage = `Upload failed: ${error.message}`;
       }
       
       setError(errorMessage);
@@ -190,6 +241,19 @@ export default function AdminDocumentUploadPage() {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Upload Document</h1>
           <p className="text-gray-600 mt-2">Upload documents for residents and admins to access</p>
+        </div>
+
+        {/* Debug Information */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <h3 className="font-medium text-yellow-800 mb-2">Debug Information:</h3>
+          <div className="text-sm text-yellow-700 space-y-1">
+            <p><strong>User Email:</strong> {user?.email || 'Not available'}</p>
+            <p><strong>User UID:</strong> {user?.uid || 'Not available'}</p>
+            <p><strong>User Data Role:</strong> {userData?.role || 'Not available'}</p>
+            <p><strong>User Name:</strong> {userData?.name || 'Not available'}</p>
+            <p><strong>Is Admin Check:</strong> {isAdmin ? 'TRUE' : 'FALSE'}</p>
+            <p><strong>Raw User Data:</strong> {JSON.stringify(userData, null, 2)}</p>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8">

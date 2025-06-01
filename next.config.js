@@ -1,7 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-      domains: ["article-assets.soho.com.au", "i.pinimg.com"],
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'article-assets.soho.com.au',
+          port: '',
+          pathname: '/**',
+        },
+        {
+          protocol: 'https',
+          hostname: 'i.pinimg.com',
+          port: '',
+          pathname: '/**',
+        },
+      ],
     },
     webpack: (config) => {
       config.module.rules.push({

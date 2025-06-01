@@ -20,7 +20,6 @@ interface Payment {
     last4: string;
     brand: string;
   };
-  stripePaymentIntentId?: string;
 }
 
 export default function AmenityPaymentsPage() {
@@ -148,7 +147,7 @@ export default function AmenityPaymentsPage() {
       payment.amenity,
       `$${payment.amount}`,
       payment.paymentMethod ? `${payment.paymentMethod.brand} ****${payment.paymentMethod.last4}` : 'N/A',
-      payment.stripePaymentIntentId || payment.id
+      payment.id
     ]);
 
     const csvContent = [headers, ...csvData]
@@ -200,8 +199,8 @@ export default function AmenityPaymentsPage() {
   const stats = calculateStats();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Amenity Payments Dashboard</h1>
           <p className="text-gray-600 mt-2">Financial overview and payment management</p>
@@ -209,9 +208,9 @@ export default function AmenityPaymentsPage() {
 
         {/* Revenue Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
+              <div className="p-3 rounded-full bg-green-100">
                 <FaDollarSign className="text-green-600 text-xl" />
               </div>
               <div className="ml-4">
@@ -221,9 +220,9 @@ export default function AmenityPaymentsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="p-3 rounded-full bg-blue-100">
                 <FaCalendarAlt className="text-blue-600 text-xl" />
               </div>
               <div className="ml-4">
@@ -233,9 +232,9 @@ export default function AmenityPaymentsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
+              <div className="p-3 rounded-full bg-purple-100">
                 <FaSwimmingPool className="text-purple-600 text-xl" />
               </div>
               <div className="ml-4">
@@ -245,9 +244,9 @@ export default function AmenityPaymentsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
+              <div className="p-3 rounded-full bg-orange-100">
                 <FaDumbbell className="text-orange-600 text-xl" />
               </div>
               <div className="ml-4">
@@ -259,7 +258,7 @@ export default function AmenityPaymentsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <FaFilter className="text-gray-600" />
             <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
@@ -270,12 +269,12 @@ export default function AmenityPaymentsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Amenity</label>
               <select
                 value={filters.amenity}
-                onChange={(e) => setFilters(prev => ({ ...prev, amenity: e.target.value }))}
+                onChange={(e) => setFilters({...filters, amenity: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Amenities</option>
                 <option value="pool">Swimming Pool</option>
-                <option value="gym">Gymnasium</option>
+                <option value="gym">Fitness Center</option>
               </select>
             </div>
 
@@ -284,7 +283,7 @@ export default function AmenityPaymentsPage() {
               <input
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                onChange={(e) => setFilters({...filters, dateFrom: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -294,7 +293,7 @@ export default function AmenityPaymentsPage() {
               <input
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                onChange={(e) => setFilters({...filters, dateTo: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -303,9 +302,9 @@ export default function AmenityPaymentsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Search Email</label>
               <input
                 type="text"
-                placeholder="resident@example.com"
+                placeholder="user@example.com"
                 value={filters.searchEmail}
-                onChange={(e) => setFilters(prev => ({ ...prev, searchEmail: e.target.value }))}
+                onChange={(e) => setFilters({...filters, searchEmail: e.target.value})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -317,7 +316,7 @@ export default function AmenityPaymentsPage() {
             </p>
             <button
               onClick={exportToCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
             >
               <FaDownload />
               Export CSV
@@ -326,33 +325,22 @@ export default function AmenityPaymentsPage() {
         </div>
 
         {/* Payments Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Payment Transactions</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Payment History</h3>
           </div>
           
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Resident
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amenity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Payment Method
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apartment</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amenity</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -364,30 +352,25 @@ export default function AmenityPaymentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {payment.userEmail}
+                          {payment.userName || 'Unknown'}
                         </div>
-                        {payment.apartment && (
-                          <div className="text-sm text-gray-500">
-                            Apt {payment.apartment}
-                          </div>
-                        )}
+                        <div className="text-sm text-gray-500">{payment.userEmail}</div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {payment.apartment || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {payment.amenity}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       ${payment.amount}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {payment.paymentMethod ? (
-                        <div>
-                          <div>{payment.paymentMethod.brand} ****{payment.paymentMethod.last4}</div>
-                          <div className="text-xs text-gray-500">{payment.paymentMethod.type}</div>
-                        </div>
-                      ) : (
+                      {payment.paymentMethod ? 
+                        `${payment.paymentMethod.brand} ****${payment.paymentMethod.last4}` : 
                         'N/A'
-                      )}
+                      }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">

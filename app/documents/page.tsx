@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { FaSpinner, FaFile, FaImage, FaFilePdf, FaFileWord, FaDownload, FaEye, FaUsers, FaGlobe, FaSearch } from 'react-icons/fa';
+import { FaSpinner, FaFile, FaImage, FaFilePdf, FaFileWord, FaDownload, FaEye, FaUsers, FaGlobe, FaSearch, FaExclamationTriangle } from 'react-icons/fa';
 
 interface Document {
   id: string;
@@ -27,42 +27,82 @@ export default function DocumentsPage() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisibility, setSelectedVisibility] = useState<'all' | 'resident' | 'public'>('all');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (user && userData) {
       fetchDocuments();
+    } else if (user && !userData) {
+      // User is authenticated but userData is not loaded yet, wait a bit
+      const timer = setTimeout(() => {
+        if (user && !userData && retryCount < 3) {
+          setRetryCount(prev => prev + 1);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [user, userData]);
+  }, [user, userData, retryCount]);
 
   useEffect(() => {
     filterDocuments();
   }, [documents, searchTerm, selectedVisibility]);
 
   const fetchDocuments = async () => {
+    if (!user || !userData) {
+      setError('Please log in to view documents');
+      setLoading(false);
+      return;
+    }
+
     try {
       setError('');
       console.log('Fetching documents for user:', userData);
       
-      // First try to get all documents and filter client-side to avoid indexing issues
-      let q = query(collection(db, 'documents'));
+      // Try multiple approaches to get documents
+      let allDocs: Document[] = [];
       
-      // Try with ordering if possible, but fall back to unordered if index doesn't exist
+      // Approach 1: Try to get all documents without ordering
       try {
-        q = query(collection(db, 'documents'), orderBy('uploadedAt', 'desc'));
-      } catch (indexError) {
-        console.log('Using unordered query due to missing index');
-        q = query(collection(db, 'documents'));
+        console.log('Trying basic query...');
+        const basicQuery = query(collection(db, 'documents'));
+        const snapshot = await getDocs(basicQuery);
+        allDocs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Document[];
+        console.log('Basic query successful, found:', allDocs.length, 'documents');
+      } catch (basicError: any) {
+        console.error('Basic query failed:', basicError);
+        
+        // Approach 2: Try with specific visibility filters
+        try {
+          console.log('Trying visibility-based queries...');
+          const publicQuery = query(collection(db, 'documents'), where('visibility', '==', 'public'));
+          const publicSnapshot = await getDocs(publicQuery);
+          
+          const residentQuery = query(collection(db, 'documents'), where('visibility', '==', 'resident'));
+          const residentSnapshot = await getDocs(residentQuery);
+          
+          allDocs = [
+            ...publicSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+            ...residentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+          ] as Document[];
+          
+          // If user is admin, also get admin documents
+          if (userData.role === 'admin') {
+            const adminQuery = query(collection(db, 'documents'), where('visibility', '==', 'admin'));
+            const adminSnapshot = await getDocs(adminQuery);
+            allDocs.push(...adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Document[]);
+          }
+          
+          console.log('Visibility-based queries successful, found:', allDocs.length, 'documents');
+        } catch (visibilityError: any) {
+          console.error('Visibility-based queries failed:', visibilityError);
+          throw visibilityError;
+        }
       }
       
-      const querySnapshot = await getDocs(q);
-      const allDocs = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Document[];
-      
-      console.log('All documents fetched:', allDocs);
-      
-      // Filter documents based on user role and visibility
+      // Filter documents based on user role and visibility (client-side filtering as backup)
       let visibleDocs = allDocs;
       
       if (userData?.role !== 'admin') {
@@ -72,29 +112,39 @@ export default function DocumentsPage() {
         );
       }
       
+      // Remove duplicates (in case we got the same document from multiple queries)
+      const uniqueDocs = visibleDocs.filter((doc, index, self) => 
+        index === self.findIndex(d => d.id === doc.id)
+      );
+      
       // Sort by upload date if available
-      visibleDocs.sort((a, b) => {
+      uniqueDocs.sort((a, b) => {
         const dateA = a.uploadedAt?.toDate?.() || new Date(0);
         const dateB = b.uploadedAt?.toDate?.() || new Date(0);
         return dateB.getTime() - dateA.getTime();
       });
       
-      console.log('Visible documents:', visibleDocs);
-      setDocuments(visibleDocs);
+      console.log('Final visible documents:', uniqueDocs);
+      setDocuments(uniqueDocs);
+      
+      if (uniqueDocs.length === 0) {
+        setError('No documents found. Documents may not have been uploaded yet, or you may not have permission to view them.');
+      }
+      
     } catch (error: any) {
       console.error('Error fetching documents:', error);
       
       // Provide more specific error messages
       if (error.code === 'permission-denied') {
-        setError('You do not have permission to view documents. Please contact an administrator.');
+        setError('Permission denied. This may be due to Firestore security rules. Please contact an administrator.');
       } else if (error.code === 'unavailable') {
         setError('Service is temporarily unavailable. Please try again later.');
       } else if (error.code === 'failed-precondition') {
         setError('Database index is being built. Please try again in a few minutes.');
       } else if (error.code === 'unauthenticated') {
-        setError('Please log in to view documents.');
+        setError('Authentication expired. Please log out and log back in.');
       } else {
-        setError(`Failed to load documents: ${error.message || 'Unknown error'}`);
+        setError(`Failed to load documents: ${error.message || 'Unknown error'}. Please try refreshing the page.`);
       }
     } finally {
       setLoading(false);
@@ -168,6 +218,9 @@ export default function DocumentsPage() {
         <div className="text-center">
           <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading documents...</p>
+          {user && !userData && (
+            <p className="text-sm text-gray-500 mt-2">Loading user data...</p>
+          )}
         </div>
       </div>
     );
@@ -179,6 +232,13 @@ export default function DocumentsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
           <p className="text-gray-600 mt-2">Access important documents and resources</p>
+          
+          {/* Debug info for troubleshooting */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+              <p><strong>Debug:</strong> User: {user?.email}, Role: {userData?.role}, Documents: {documents.length}</p>
+            </div>
+          )}
         </div>
 
         {/* Search and Filter */}
@@ -215,6 +275,7 @@ export default function DocumentsPage() {
               <button
                 onClick={() => {
                   setLoading(true);
+                  setError('');
                   fetchDocuments();
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -228,8 +289,11 @@ export default function DocumentsPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
             <div className="flex items-center gap-2">
-              <span className="font-medium">Error:</span>
-              <span>{error}</span>
+              <FaExclamationTriangle className="text-red-600" />
+              <div>
+                <span className="font-medium">Error:</span>
+                <span className="ml-2">{error}</span>
+              </div>
             </div>
           </div>
         )}

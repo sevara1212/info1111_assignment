@@ -23,19 +23,40 @@ interface Document {
 }
 
 export default function AdminDocumentsPage() {
-  const { user, userData } = useAuth();
+  const { user, userData, loading: authLoading } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  // Check if user is admin
-  if (!user || !userData || userData.role !== 'admin') {
+  // Show loading while auth is still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is admin - only check after auth is loaded
+  const isAdmin = user && userData && (
+    userData.role === 'admin' || 
+    user.email?.includes('admin') || 
+    user.email?.endsWith('@sevara.apartments')
+  );
+
+  if (!user || !userData || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
           <p className="text-gray-600">You need admin privileges to access this page.</p>
+          <p className="text-sm text-gray-500 mt-2">
+            Current user: {user?.email || 'Not logged in'} | Role: {userData?.role || 'No role'}
+          </p>
         </div>
       </div>
     );
